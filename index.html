@@ -37,11 +37,15 @@
  .hl{background:#f59e0b55!important;border-left-color:#f59e0b!important}
  .primary{background:linear-gradient(90deg,#7c3aed,#06b6d4);border:0;font-weight:600}
  select,input{background:#0f172a;border:1px solid #ffffff22;border-radius:.8rem;padding:.55rem .8rem;color:#e2e8f0}
- .duo{display:grid;gap:1rem}#trace,#qtrace{max-height:20rem}#root.wide{max-width:76rem}
+ .duo{display:grid;gap:1rem;grid-template-columns:minmax(0,1fr)}.duo>*{min-width:0}
+ pre{max-width:100%;overflow-x:auto}
+ @media (max-width:640px),(pointer:coarse){button,select{min-height:40px}#qc button{min-height:40px;display:inline-flex;align-items:center;padding:0 .25rem}input[type=range]{min-height:32px}}#trace,#qtrace{max-height:20rem}#root.wide{max-width:76rem}
  @media (min-width:1024px){.duo.side{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}.duo.side.swap #tracebox,.duo.side.swap #qtracebox{order:-1}.duo.side #tracebox,.duo.side #qtracebox{position:sticky;top:1rem}.duo.side #trace{max-height:calc(100vh - 25rem);min-height:10rem}.duo.side #qtrace{max-height:calc(100vh - 31rem);min-height:9rem}}
  .tl{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.75;white-space:pre;padding-right:8px;border-left:3px solid transparent;border-radius:4px}
  .tl .tcm{color:#64748b}.tl.call .tc{color:#67e8f9}.tl.merge .tc{color:#fcd34d}
  .tl.cur{background:#f59e0b2e;border-left-color:#f59e0b}.tl.cur .tcm{color:#fde68a}
+ .ax{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;min-width:2rem;height:2.7rem;padding:0 .25rem;border:1px solid #475569;border-radius:.5rem;font-weight:700;font-size:.85rem;background:#1e1b4b66;transition:background .3s,border-color .3s}.ax i{font-size:.6rem;color:#94a3b8;font-style:normal;font-weight:400}.ax.hl{border-color:#fcd34d;background:#b4530966}.ax.ok{border-color:#6ee7b7;background:#04785766}.ax.pk{border-color:#22d3ee;background:#0e749088}
+ .ax.bk{min-width:3.4rem;height:auto;min-height:2.7rem;padding:.2rem .3rem;justify-content:flex-start}.ax.bk i{margin-bottom:.15rem}.ax.dim2{opacity:.55}.rc{font-size:.75rem;font-weight:700;padding:0 .3rem;border-radius:.3rem;background:#312e8199}.rc.cur2{background:#b45309}.rc u{text-decoration-color:#fcd34d;text-underline-offset:2px}
  .tl.fin{opacity:.42}.tl.from{background:#22d3ee22;border-left-color:#22d3ee}
  @media (prefers-reduced-motion:reduce){.card{transition:none}.pop{animation:none}}
 </style>
@@ -51,15 +55,25 @@
 
   <header class="flex items-center justify-between">
     <h1 class="text-2xl font-bold bg-gradient-to-r from-violet-400 to-cyan-300 bg-clip-text text-transparent" id="t-title">Merge Sort Visualizer</h1>
-    <button id="lang" class="btn text-sm">বাংলা</button>
+    <div class="flex items-center gap-2">
+      <input id="sndVol" type="range" min="0" max="100" value="50" class="hidden sm:block w-20" aria-label="Volume">
+      <button id="sndBtn" class="btn text-sm" aria-pressed="true" title="Sound on">🔊</button>
+      <button id="lang" class="btn text-sm">বাংলা</button>
+    </div>
   </header>
 
-  <div id="algoTabs" class="flex flex-wrap gap-2">
-    <button id="algoM" class="btn primary text-sm">Merge Sort</button>
-    <button id="algoQ" class="btn text-sm">Quick Sort</button>
-    <button id="algoB" class="btn text-sm">Bubble Sort</button>
-    <button id="algoS" class="btn text-sm">Selection Sort</button>
-    <button id="algoI" class="btn text-sm">Insertion Sort</button>
+  <div id="algoTabs" class="flex items-center gap-1.5 overflow-x-auto pb-1" role="group" aria-label="Sorting algorithm">
+    <button id="algoM" class="btn primary text-sm shrink-0 whitespace-nowrap">Merge Sort</button>
+    <span class="shrink-0 self-stretch w-px bg-white/15 mx-0.5" aria-hidden="true"></span>
+    <button id="algoB" class="btn text-sm shrink-0 whitespace-nowrap">Bubble Sort</button>
+    <button id="algoS" class="btn text-sm shrink-0 whitespace-nowrap">Selection Sort</button>
+    <button id="algoI" class="btn text-sm shrink-0 whitespace-nowrap">Insertion Sort</button>
+    <button id="algoSh" class="btn text-sm shrink-0 whitespace-nowrap">Shell Sort</button>
+    <button id="algoQ" class="btn text-sm shrink-0 whitespace-nowrap">Quick Sort</button>
+    <button id="algoH" class="btn text-sm shrink-0 whitespace-nowrap">Heap Sort</button>
+    <span class="shrink-0 self-stretch w-px bg-white/15 mx-0.5" aria-hidden="true"></span>
+    <button id="algoC" class="btn text-sm shrink-0 whitespace-nowrap">Counting Sort</button>
+    <button id="algoR" class="btn text-sm shrink-0 whitespace-nowrap">Radix Sort</button>
   </div>
 
   <div id="qs" style="display:none" class="space-y-4">
@@ -73,6 +87,7 @@
       <button id="qrand" class="btn">Random</button>
       <button id="qsorted" class="btn text-sm"></button>
       <button id="qrev" class="btn text-sm"></button>
+      <button id="qshare" class="btn text-sm"></button>
       <p id="qerr" class="w-full text-sm text-rose-400"></p>
     </section>
     <div id="qduo" class="duo side">
@@ -82,15 +97,18 @@
           <span id="qstepno" class="text-slate-400"></span>
         </div>
         <div id="qstage" class="relative w-full overflow-x-auto overflow-y-hidden"></div>
+        <p id="qhint" class="text-center text-xs text-slate-500" style="display:none"></p>
+        <div id="qtree" class="w-full overflow-x-auto" style="display:none"></div>
         <div id="qleg" class="flex flex-wrap gap-1.5 justify-center text-xs"></div>
         <input id="qseek" type="range" min="0" value="0" class="w-full accent-cyan-400" aria-label="Step">
-        <p id="qmsg" class="text-center min-h-[3rem] text-base text-slate-100"></p>
+        <p id="qmsg" class="text-center min-h-[3rem] text-base text-slate-100" aria-live="polite"></p>
         <div id="qvars" class="flex flex-wrap gap-1.5 justify-center text-xs font-mono min-h-[1.5rem]"></div>
         <div class="flex flex-wrap gap-2 justify-center items-center">
           <button id="qrestart" class="btn" title="Restart">⏮</button>
           <button id="qprev" class="btn" title="Previous">◀</button>
           <button id="qplay" class="btn primary w-28">▶ Play</button>
           <button id="qnext" class="btn" title="Next">▶|</button>
+          <button id="qblk" class="btn" title="Next pass / call">⏭</button>
           <select id="qspeed" class="text-sm">
             <option value="2000">Very slow</option>
             <option value="1000" selected>Slow</option>
@@ -113,6 +131,11 @@
         <div id="qtrace" class="relative overflow-x-auto overflow-y-auto rounded-xl bg-black/25 p-2"></div>
       </section>
     </div>
+    <section class="glass p-4 space-y-2">
+      <h2 id="qc-h" class="text-xs uppercase tracking-wider text-slate-400"></h2>
+      <p id="qc-n" class="text-xs text-slate-400"></p>
+      <div id="qc" class="overflow-x-auto"></div>
+    </section>
   </div>
 
   <section class="glass p-4 space-y-2">
@@ -265,6 +288,13 @@
   <details class="glass p-4">
     <summary class="cursor-pointer text-sm font-semibold">Changelog</summary>
     <ul class="text-sm list-disc pl-5 mt-2 space-y-1 text-slate-300">
+      <li><b>v0.43</b> – <b>Sounds for every step</b>, on all tabs including Merge Sort. Each number has its own musical note (small = low, big = high, always from one pleasant scale), so you can hear a list get sorted. Compare = the two notes of the numbers being compared; Swap = two notes with a soft knock; Shift / place / bucket = one warm note; a bell rings when a number reaches its final place; a new pass or call = a quiet tick; Done = a short fanfare. Stepping with Next or ◀ and Play all make sound; dragging the slider or jumping stays quiet. Check it: press Play on any tab. Top right: the 🔊 button mutes, and the slider next to it sets the volume (on wider screens). Your choice is remembered.</li>
+      <li><b>v0.42</b> – Responsiveness fixes found with a real-browser check of every tab at 320, 360, 390, 768, 1024 and 1366 px wide. (1) On phones the whole page could slide sideways by 150 to 670 px because the stage and code box could not shrink; they now shrink to the screen (this also fixes the Merge Sort tab). (2) The pseudocode block on the Merge Sort tab no longer pushes the page wider on very small phones; long code lines scroll inside their box. (3) Buttons and menus are at least 40 px tall on phones and touch screens, so they are easy to tap. (4) With many numbers on a narrow screen, the number row scrolls sideways, follows the action automatically and shows a “swipe” hint. (5) Pointer labels (i, j, root, key…) are no longer cut off at the edges. (6) The empty gap under the cards at the end of Counting Sort and Radix Sort is gone.</li>
+      <li><b>v0.41</b> – New <b>Radix Sort</b> tab (next to Counting Sort). Ten buckets (digits 0 to 9) sit under the cards; every number drops into its bucket by the current digit (underlined), then the buckets are emptied in order, pass after pass: ones, tens, hundreds. Whole numbers 0 to 999; “Random” makes 10 to 199, and the demo list is the classic 170, 45, 75, 90, 802, 24, 2, 66. Check it: click “Radix Sort”, press Play, and use the ⏭ button to jump from pass to pass.</li>
+      <li><b>v0.40</b> – New <b>Counting Sort</b> tab (after a divider, because it never compares two numbers). Under the cards you see the count boxes and the output list fill up; the code box shows the three loops (count, running totals, place) as blocks. It accepts whole numbers 0 to 20; other tabs keep working with any numbers. “Random” makes 0 to 9 here. Check it: click “Counting Sort”, press Play, and watch the numbers glide into place at the last step.</li>
+      <li><b>v0.39</b> – Tidy-up and improvements for the Bubble, Selection, Insertion, Shell, Quick and Heap tabs (Merge Sort untouched). (1) The tab row is one tidy line that scrolls sideways on small screens, with Merge Sort separated and the others in teaching order. (2) New table under the tab, “Compare all sorts on this list”, with comparisons, moves and steps for every sort; click a name to jump to that sort. (3) New ⏭ button jumps to the next pass or call. (4) New “Share link” button: the page address now remembers the sort and the numbers, so a classmate sees exactly the same animation. (5) Screen readers read each step message. (6) The six sorts now share one helper, so the file is smaller and easier to extend.</li>
+      <li><b>v0.38</b> – New <b>Shell Sort</b> tab (seventh tab). The numbers in the same chain as the current key (exactly gap places apart) are outlined in cyan, the key is amber and jumps left by the gap, and the code box shows each gap as a block with one smaller block per i. Check it: click “Shell Sort”, press Play, and watch how the gap goes 4, 2, 1 for 8 numbers.</li>
+      <li><b>v0.37</b> – New <b>Heap Sort</b> tab (sixth tab). A heap tree is drawn above the number cards (children of index k are 2k+1 and 2k+2), the largest-so-far is amber, and the code box shows <code>HeapSort</code> and the recursive <code>Heapify</code>, where each call opens as its own copy and calls itself again when a number sinks further. Check it: click “Heap Sort”, press Play, and watch the tree and the cards together.</li>
       <li><b>v0.36</b> – New <b>Insertion Sort</b> tab (fifth tab). The key is amber and slides left while bigger numbers shift right, the sorted part is outlined in cyan, and every pass is its own block in the code box with the <code>while</code> checks written out. Check it: click “Insertion Sort”, press Play, then try “Sorted (best case)”. The counter says “shifts” here.</li>
       <li><b>v0.35</b> – New <b>Selection Sort</b> tab (fourth tab). The smallest number found so far is amber, the compared number j glows, the sorted left part turns green, and each pass is its own block in the code box. Check it: click “Selection Sort”, press Play, and note that “Sorted (still O(n²))” takes just as many comparisons.</li>
       <li><b>v0.34</b> – New <b>Bubble Sort</b> tab (third tab at the top). Each pass opens as its own block in the code box, the compared pair j and j+1 is highlighted, finished passes turn grey, and the swapped flag stops it early on sorted input. Check it: click “Bubble Sort”, press Play, then try “Sorted (best case)”.</li>
@@ -656,6 +686,7 @@ function traceRender(s){
 function render(){
   if(!steps.length)return;
   const s=steps[idx],t=tr(),tot=steps[steps.length-1].c;
+  if(Math.abs(idx-mLastIdx)===1)mgSound(s);mLastIdx=idx;
   $('stage').style.setProperty('--dur',Math.min(.8,+$('speed').value/1000*.7)+'s');
   layout(s);
   if(s.cp){const[ii,jj,x,y,lf]=s.cp;
@@ -1302,13 +1333,13 @@ $('pats').onclick=e=>{const k=e.target.dataset.k;if(k){$('inp').value=mk(k).join
 $('tglSide').onclick=()=>{side=!side;layoutApply();};
 $('tglSwap').onclick=()=>{swap=!swap;layoutApply();};
 /* ===== Quick Sort module (v0.33) ===== */
-let qAlg='qs',qsMode=false,qSteps=[],qIdx=0,qTimer=null,qV=[],qCards=[],qSz=48,qGap=10;
+let qLastIdx=0,qCmpRows=[],qAlg='qs',qsMode=false,qSteps=[],qIdx=0,qTimer=null,qV=[],qCards=[],qSz=48,qGap=10;
 const QM=(en,bn)=>({en,bn});
 const QT={
  en:{tabM:'Merge Sort',tabQ:'Quick Sort',title:'Quick Sort Visualizer',
   purpose:'Quick Sort picks one number as the pivot and rearranges the range so smaller numbers sit on its left and bigger numbers on its right. The pivot is then in its final place. The same is repeated on the left part and the right part.',
   cx:'Average O(n log n) · worst case O(n²) (for example an already sorted list when the last element is the pivot) · extra space O(log n) for the recursion · not stable',
-  load:'Load',rand:'Random',sorted:'Sorted (worst case)',rev:'Reversed',tabB:'Bubble Sort',tabS:'Selection Sort',tabI:'Insertion Sort',play:'▶ Play',pause:'⏸ Pause',
+  load:'Load',rand:'Random',sorted:'Sorted (worst case)',rev:'Reversed',tabB:'Bubble Sort',tabS:'Selection Sort',tabI:'Insertion Sort',tabH:'Heap Sort',tabSh:'Shell Sort',swipe:'↔ Swipe sideways to see all the numbers',tabC:'Counting Sort',tabR:'Radix Sort',writes:'writes',cmpH:'Compare all sorts on this list',cmpN:'The same numbers run through every sort above (Merge Sort has its own tab). Click a name to watch that sort. “Moves” are swaps, or shifts for Insertion and Shell Sort. Steps are animation steps, not CPU time.',cols:['Sort','Comparisons','Moves','Steps'],swaps:'swaps',shifts:'shifts',blk:'Jump to the next pass / call',share:'🔗 Share link',copied:'✓ Link copied',play:'▶ Play',pause:'⏸ Pause',
   err:'Enter 2 to 12 whole numbers separated by commas.',step:'Step',
   defH:'1. Pseudocode definition (written once)',stepsH:'2. Steps: how it actually runs',
   note:'Each QS call opens as its own copy, one level deeper. Partition opens inside it. When a call returns it turns grey and control goes back to its caller.',
@@ -1317,7 +1348,7 @@ const QT={
  bn:{tabM:'মার্জ সর্ট',tabQ:'কুইক সর্ট',title:'কুইক সর্ট ভিজ্যুয়ালাইজার',
   purpose:'Quick Sort একটি সংখ্যাকে pivot ধরে এবং অংশটি এমনভাবে সাজায় যাতে ছোট সংখ্যা তার বামে আর বড় সংখ্যা ডানে থাকে। তখন pivot তার চূড়ান্ত জায়গায় বসে যায়। এরপর বাম অংশ ও ডান অংশে একই কাজ আবার করা হয়।',
   cx:'গড়ে O(n log n) · সবচেয়ে খারাপ O(n²) (যেমন আগে থেকেই সাজানো তালিকায়, শেষ সংখ্যা pivot হলে) · রিকার্শনের জন্য বাড়তি স্পেস O(log n) · stable নয়',
-  load:'লোড',rand:'র‍্যান্ডম',sorted:'সাজানো (সবচেয়ে খারাপ)',rev:'উল্টো',tabB:'বাবল সর্ট',tabS:'সিলেকশন সর্ট',tabI:'ইনসার্শন সর্ট',play:'▶ চালান',pause:'⏸ থামান',
+  load:'লোড',rand:'র‍্যান্ডম',sorted:'সাজানো (সবচেয়ে খারাপ)',rev:'উল্টো',tabB:'বাবল সর্ট',tabS:'সিলেকশন সর্ট',tabI:'ইনসার্শন সর্ট',tabH:'হিপ সর্ট',tabSh:'শেল সর্ট',swipe:'↔ সব সংখ্যা দেখতে পাশে সোয়াইপ করুন',tabC:'কাউন্টিং সর্ট',tabR:'রেডিক্স সর্ট',writes:'লেখা',cmpH:'এই তালিকায় সব সর্টের তুলনা',cmpN:'একই সংখ্যা উপরের প্রতিটি সর্টে চালানো হয়েছে (Merge Sort-এর নিজস্ব ট্যাব আছে)। কোনো নামে ক্লিক করলে সেই সর্ট দেখতে পাবেন। “নড়াচড়া” মানে অদলবদল, আর Insertion ও Shell Sort-এ সরানো। ধাপ মানে অ্যানিমেশনের ধাপ, CPU সময় নয়।',cols:['সর্ট','তুলনা','নড়াচড়া','ধাপ'],swaps:'অদলবদল',shifts:'সরানো',blk:'পরের pass / কল-এ যান',share:'🔗 লিংক শেয়ার',copied:'✓ লিংক কপি হয়েছে',play:'▶ চালান',pause:'⏸ থামান',
   err:'কমা দিয়ে ২ থেকে ১২টি পূর্ণসংখ্যা লিখুন।',step:'ধাপ',
   defH:'১. সুডোকোড সংজ্ঞা (একবারই লেখা)',stepsH:'২. ধাপ: আসলে যেভাবে চলে',
   note:'প্রতিটি QS কল নিজের কপি হিসেবে এক ধাপ ভেতরে খোলে। এর ভেতরে Partition খোলে। কল শেষ হলে ধূসর হয় এবং কন্ট্রোল caller-এ ফিরে যায়।',
@@ -1327,14 +1358,19 @@ const QT={
 const QDEF=[[0,'QS(arr, low, high) {'],[1,'if (low >= high) return;'],[1,'p = Partition(arr, low, high);'],[1,'QS(arr, low, p - 1);'],[1,'QS(arr, p + 1, high);'],[0,'}'],
  [0,'Partition(arr, low, high) {'],[1,'pivot = arr[high];'],[1,'i = low - 1;'],[1,'for (j = low; j < high; j++) {'],[2,'if (arr[j] <= pivot) {'],[3,'i++; swap(arr[i], arr[j]);'],[2,'}'],[1,'}'],[1,'swap(arr[i + 1], arr[high]);'],[1,'return i + 1;'],[0,'}']];
 
+/* shared helpers for every Quick/Bubble/Selection/Insertion/Heap/Shell run */
+function qsKit(vals,swl){
+  const K={n:vals.length,a:vals.map((v,id)=>({v,id})),S:[],TR:[],CC:[],fin:new Set(),c:0,w:0};
+  K.tp=(d,c,m,id,k,dl,fr)=>{const e={d,c,m,id,k:k||'',m2:null,at:0,dl,fr:fr||0};K.TR.push(e);return e;};
+  K.tc=(d,id,back,dl)=>{K.TR.push({d,c:'}',m:back,id,k:'',m2:null,at:0,dl,fr:0});K.CC[id].end=K.TR.length-1;};
+  K.snap=(ph,m,o)=>K.S.push(Object.assign({o:K.a.map(x=>x.id),lo:null,hi:null,i:null,j:null,pid:null,fin:[...K.fin],tl:K.TR.length-1,ph,m,cmp:K.c,swp:K.w},swl?{swl}:{},o||{}));
+  K.sw=(x,y)=>{const t=K.a[x];K.a[x]=K.a[y];K.a[y]=t;};
+  K.vs=()=>K.a.map(q=>q.v).join(',');
+  K.sl=(x,y)=>K.a.slice(x,y+1).map(q=>q.v).join(',');
+  return K;
+}
 function qsRun(vals){
-  const n=vals.length,a=vals.map((v,id)=>({v,id})),S=[],TR=[],CC=[],fin=new Set();
-  let cmp=0,swp=0;
-  const tp=(d,c,m,id,k,dl,fr)=>{const e={d,c,m,id,k:k||'',m2:null,at:0,dl,fr:fr||0};TR.push(e);return e;};
-  const tc=(d,id,back,dl)=>{TR.push({d,c:'}',m:back,id,k:'',m2:null,at:0,dl,fr:0});CC[id].end=TR.length-1;};
-  const snap=(ph,m,o)=>S.push(Object.assign({o:a.map(x=>x.id),lo:null,hi:null,i:null,j:null,pid:null,fin:[...fin],tl:TR.length-1,ph,m,cmp,swp},o||{}));
-  const sl=(x,y)=>a.slice(x,y+1).map(q=>q.v).join(',');
-  const sw=(x,y)=>{const t=a[x];a[x]=a[y];a[y]=t;};
+  const K=qsKit(vals),n=K.n,a=K.a,S=K.S,TR=K.TR,CC=K.CC,fin=K.fin,tp=K.tp,tc=K.tc,snap=K.snap,sw=K.sw,vs=K.vs,sl=K.sl;
   const PH={start:QM('Start','শুরু'),call:QM('Call','কল'),part:QM('Partition','পার্টিশন'),piv:QM('Pivot','Pivot'),cmp:QM('Compare','তুলনা'),swap:QM('Swap','অদলবদল'),place:QM('Place pivot','Pivot বসানো'),ret:QM('Return','ফেরত'),done:QM('Done','শেষ')};
   snap(PH.start,QM('Start. QS(arr, 0, '+(n-1)+') is called on the whole list.','শুরু। পুরো তালিকায় QS(arr, 0, '+(n-1)+') কল হলো।'));
   function part(lo,hi,d,pid){
@@ -1347,16 +1383,16 @@ function qsRun(vals){
     tp(d+1,'i = low - 1;','i = '+i,pid,'',8);
     snap(PH.piv,QM('i = '+i+': the “≤ pivot” zone is empty so far.','i = '+i+': এখনো “≤ pivot” অংশে কিছু নেই।'),{lo,hi,pid:pc,i});
     for(let j=lo;j<hi;j++){
-      cmp++;const x=a[j].v,yes=x<=pv;
+      K.c++;const x=a[j].v,yes=x<=pv;
       tp(d+1,'if (arr[j] <= pivot)','j = '+j+':  '+x+' <= '+pv+' ?  '+(yes?'YES':'NO'),pid,'',10);
       snap(PH.cmp,yes?QM('j = '+j+': is '+x+' ≤ '+pv+'? Yes, it belongs in the left zone.','j = '+j+': '+x+' ≤ '+pv+' কি? হ্যাঁ, এটি বাম অংশে যাবে।'):QM('j = '+j+': is '+x+' ≤ '+pv+'? No, it stays in the right zone.','j = '+j+': '+x+' ≤ '+pv+' কি? না, এটি ডান অংশেই থাকবে।'),{lo,hi,pid:pc,i,j});
       if(yes){
-        i++;sw(i,j);if(i!==j)swp++;
+        i++;sw(i,j);if(i!==j)K.w++;
         tp(d+2,'i++; swap(arr[i], arr[j]);','i = '+i+';  swap index '+i+' and '+j+(i===j?' (same spot, nothing moves)':''),pid,'',11);
         snap(PH.swap,QM('i moves to '+i+'. Swap index '+i+' and '+j+(i===j?' (same spot, nothing moves).':'.'),'i এখন '+i+'। index '+i+' ও '+j+' অদলবদল'+(i===j?' (একই জায়গা, কিছু নড়ে না)।':'।')),{lo,hi,pid:pc,i,j});
       }
     }
-    const p=i+1;sw(p,hi);if(p!==hi)swp++;
+    const p=i+1;sw(p,hi);if(p!==hi)K.w++;
     tp(d+1,'swap(arr[i + 1], arr[high]);','swap index '+p+' and '+hi+' → pivot goes to index '+p,pid,'',14);
     fin.add(pc);
     snap(PH.place,QM('Loop finished. Swap the pivot into index '+p+'. '+pv+' is now in its final place.','লুপ শেষ। pivot-কে index '+p+'-এ বসাই। '+pv+' এখন তার চূড়ান্ত জায়গায়।'),{lo,hi,pid:pc,i});
@@ -1411,13 +1447,7 @@ const QTB={
 };
 const BDEF=[[0,'BubbleSort(arr, n) {'],[1,'for (pass = 0; pass < n - 1; pass++) {'],[2,'swapped = false;'],[2,'for (j = 0; j < n - 1 - pass; j++) {'],[3,'if (arr[j] > arr[j + 1]) {'],[4,'swap(arr[j], arr[j + 1]); swapped = true;'],[3,'}'],[2,'}'],[2,'if (swapped == false) break;'],[1,'}'],[0,'}']];
 function bubRun(vals){
-  const n=vals.length,a=vals.map((v,id)=>({v,id})),S=[],TR=[],CC=[],fin=new Set();
-  let cmp=0,swp=0;
-  const tp=(d,c,m,id,k,dl)=>{const e={d,c,m,id,k:k||'',m2:null,at:0,dl,fr:0};TR.push(e);return e;};
-  const tc=(d,id,back,dl)=>{TR.push({d,c:'}',m:back,id,k:'',m2:null,at:0,dl,fr:0});CC[id].end=TR.length-1;};
-  const snap=(ph,m,o)=>S.push(Object.assign({o:a.map(x=>x.id),lo:null,hi:null,i:null,j:null,pid:null,fin:[...fin],tl:TR.length-1,ph,m,cmp,swp},o||{}));
-  const sw=(x,y)=>{const t=a[x];a[x]=a[y];a[y]=t;};
-  const vs=()=>a.map(q=>q.v).join(',');
+  const K=qsKit(vals),n=K.n,a=K.a,S=K.S,TR=K.TR,CC=K.CC,fin=K.fin,tp=K.tp,tc=K.tc,snap=K.snap,sw=K.sw,vs=K.vs,sl=K.sl;
   const PH={start:QM('Start','শুরু'),pass:QM('Pass','Pass'),cmp:QM('Compare','তুলনা'),swap:QM('Swap','অদলবদল'),chk:QM('Check','পরীক্ষা'),done:QM('Done','শেষ')};
   const rid=CC.length;CC.push({end:-1});
   tp(0,'BubbleSort(arr, '+n+') {','['+vs()+']',rid,'call',0);
@@ -1430,12 +1460,12 @@ function bubRun(vals){
     tp(2,'swapped = false;','',id,'',2);
     snap(PH.pass,QM('swapped = false: no swap has happened yet in this pass.','swapped = false: এই pass-এ এখনো কোনো অদলবদল হয়নি।'),{lo:0,hi,fl,vr:[['pass',pass],['swapped','false']]});
     for(let j=0;j<hi;j++){
-      cmp++;const x=a[j].v,y=a[j+1].v,yes=x>y;
+      K.c++;const x=a[j].v,y=a[j+1].v,yes=x>y;
       tp(2,'if (arr[j] > arr[j + 1])','j = '+j+':  '+x+' > '+y+' ?  '+(yes?'YES':'NO'),id,'',4);
       const ex={lo:0,hi,fl,act:[j,j+1],pa:j,pal:'j',pb:j+1,pbl:'j+1'};
       snap(PH.cmp,yes?QM('j = '+j+': is '+x+' > '+y+'? Yes, wrong order.','j = '+j+': '+x+' > '+y+' কি? হ্যাঁ, ক্রম ভুল।'):QM('j = '+j+': is '+x+' > '+y+'? No, already in order. Leave them.','j = '+j+': '+x+' > '+y+' কি? না, ক্রম ঠিক আছে। এভাবেই থাকুক।'),Object.assign({vr:[['pass',pass],['j',j],['swapped',String(swapped)]]},ex));
       if(yes){
-        sw(j,j+1);swp++;swapped=true;
+        sw(j,j+1);K.w++;swapped=true;
         tp(3,'swap(arr[j], arr[j + 1]); swapped = true;','swap index '+j+' and '+(j+1)+' → ['+vs()+']',id,'',5);
         snap(PH.swap,QM('Swap index '+j+' and '+(j+1)+'. The bigger number ('+x+') moves one step to the right. swapped = true.','index '+j+' ও '+(j+1)+' অদলবদল। বড় সংখ্যা ('+x+') এক ধাপ ডানে যায়। swapped = true।'),Object.assign({vr:[['pass',pass],['j',j],['swapped','true']]},ex));
       }
@@ -1477,13 +1507,7 @@ const QTS={
 };
 const SDEF=[[0,'SelectionSort(arr, n) {'],[1,'for (i = 0; i < n - 1; i++) {'],[2,'min = i;'],[2,'for (j = i + 1; j < n; j++) {'],[3,'if (arr[j] < arr[min]) {'],[4,'min = j;'],[3,'}'],[2,'}'],[2,'swap(arr[i], arr[min]);'],[1,'}'],[0,'}']];
 function selRun(vals){
-  const n=vals.length,a=vals.map((v,id)=>({v,id})),S=[],TR=[],CC=[],fin=new Set();
-  let cmp=0,swp=0;
-  const tp=(d,c,m,id,k,dl)=>{const e={d,c,m,id,k:k||'',m2:null,at:0,dl,fr:0};TR.push(e);return e;};
-  const tc=(d,id,back,dl)=>{TR.push({d,c:'}',m:back,id,k:'',m2:null,at:0,dl,fr:0});CC[id].end=TR.length-1;};
-  const snap=(ph,m,o)=>S.push(Object.assign({o:a.map(x=>x.id),lo:null,hi:null,i:null,j:null,pid:null,fin:[...fin],tl:TR.length-1,ph,m,cmp,swp},o||{}));
-  const sw=(x,y)=>{const t=a[x];a[x]=a[y];a[y]=t;};
-  const vs=()=>a.map(q=>q.v).join(',');
+  const K=qsKit(vals),n=K.n,a=K.a,S=K.S,TR=K.TR,CC=K.CC,fin=K.fin,tp=K.tp,tc=K.tc,snap=K.snap,sw=K.sw,vs=K.vs,sl=K.sl;
   const PH={start:QM('Start','শুরু'),pass:QM('Pass','Pass'),cmp:QM('Compare','তুলনা'),min:QM('New minimum','নতুন minimum'),swap:QM('Swap','অদলবদল'),done:QM('Done','শেষ')};
   const rid=CC.length;CC.push({end:-1});
   tp(0,'SelectionSort(arr, '+n+') {','['+vs()+']',rid,'call',0);
@@ -1497,7 +1521,7 @@ function selRun(vals){
     tp(2,'min = i;','min = '+i+'  (value '+a[i].v+')',id,'',2);
     snap(PH.min,QM('min = '+i+': for now the number '+a[i].v+' at index '+i+' is our smallest.','min = '+i+': আপাতত index '+i+'-এর সংখ্যা '+a[i].v+'-ই সবচেয়ে ছোট।'),{lo:i,hi:n-1,fl,pa:i,pal:'i',pb:null,pid:a[m].id,vr:[['i',i],['min',m]]});
     for(let j=i+1;j<n;j++){
-      cmp++;const x=a[j].v,y=a[m].v,yes=x<y;
+      K.c++;const x=a[j].v,y=a[m].v,yes=x<y;
       tp(3,'if (arr[j] < arr[min])','j = '+j+':  '+x+' < '+y+' ?  '+(yes?'YES':'NO'),id,'',4);
       const ex={lo:i,hi:n-1,fl,pa:i,pal:'i',pb:j,pbl:'j',act:[j],pid:a[m].id};
       snap(PH.cmp,yes?QM('j = '+j+': is '+x+' < '+y+' (smallest so far)? Yes, a new smallest.','j = '+j+': '+x+' < '+y+' (এখন পর্যন্ত সবচেয়ে ছোট) কি? হ্যাঁ, নতুন সবচেয়ে ছোট।'):QM('j = '+j+': is '+x+' < '+y+' (smallest so far)? No, keep the old one.','j = '+j+': '+x+' < '+y+' (এখন পর্যন্ত সবচেয়ে ছোট) কি? না, আগেরটিই থাকুক।'),Object.assign({vr:[['i',i],['j',j],['min',m]]},ex));
@@ -1509,7 +1533,7 @@ function selRun(vals){
     }
     const mv=a[m].v,same=m===i;
     tp(2,'swap(arr[i], arr[min]);',same?'min = i, already in place, nothing moves':'swap index '+i+' and '+m+' → ['+(sw(i,m),vs())+']',id,'',8);
-    if(!same)swp++;
+    if(!same)K.w++;
     fin.add(a[i].id);
     snap(PH.swap,same?QM('The smallest ('+mv+') is already at index '+i+', so nothing moves. It is in its final place.','সবচেয়ে ছোট ('+mv+') আগেই index '+i+'-এ আছে, তাই কিছু নড়ে না। এটি চূড়ান্ত জায়গায়।'):QM('Swap index '+i+' and '+m+': '+mv+' goes to index '+i+', its final place.','index '+i+' ও '+m+' অদলবদল: '+mv+' এখন index '+i+'-এ, চূড়ান্ত জায়গায়।'),{lo:i,hi:n-1,fl,pa:i,pal:'i',pb:null,pid:a[i].id,vr:[['i',i],['min',m]]});
     tc(1,id,'end of pass '+i+': '+mv+' is in its final place',9);
@@ -1539,13 +1563,7 @@ const QTI={
 };
 const IDEF=[[0,'InsertionSort(arr, n) {'],[1,'for (i = 1; i < n; i++) {'],[2,'key = arr[i];'],[2,'j = i - 1;'],[2,'while (j >= 0 && arr[j] > key) {'],[3,'arr[j + 1] = arr[j];'],[3,'j--;'],[2,'}'],[2,'arr[j + 1] = key;'],[1,'}'],[0,'}']];
 function insRun(vals){
-  const n=vals.length,a=vals.map((v,id)=>({v,id})),S=[],TR=[],CC=[],fin=new Set();
-  let cmp=0,swp=0;
-  const tp=(d,c,m,id,k,dl)=>{const e={d,c,m,id,k:k||'',m2:null,at:0,dl,fr:0};TR.push(e);return e;};
-  const tc=(d,id,back,dl)=>{TR.push({d,c:'}',m:back,id,k:'',m2:null,at:0,dl,fr:0});CC[id].end=TR.length-1;};
-  const snap=(ph,m,o)=>S.push(Object.assign({o:a.map(x=>x.id),lo:null,hi:null,i:null,j:null,pid:null,fin:[...fin],tl:TR.length-1,ph,m,cmp,swp,swl:'shifts'},o||{}));
-  const sw=(x,y)=>{const t=a[x];a[x]=a[y];a[y]=t;};
-  const vs=()=>a.map(q=>q.v).join(',');
+  const K=qsKit(vals,'shifts'),n=K.n,a=K.a,S=K.S,TR=K.TR,CC=K.CC,fin=K.fin,tp=K.tp,tc=K.tc,snap=K.snap,sw=K.sw,vs=K.vs,sl=K.sl;
   const PH={start:QM('Start','শুরু'),pass:QM('Pass','Pass'),key:QM('Key','Key'),cmp:QM('Compare','তুলনা'),shift:QM('Shift','সরানো'),place:QM('Insert','বসানো'),done:QM('Done','শেষ')};
   const rid=CC.length;CC.push({end:-1});
   tp(0,'InsertionSort(arr, '+n+') {','['+vs()+']',rid,'call',0);
@@ -1566,11 +1584,11 @@ function insRun(vals){
         snap(PH.cmp,QM('j = -1: nothing left to compare, so '+key+' is the smallest so far.','j = -1: তুলনা করার আর কিছু নেই, তাই '+key+' এখন পর্যন্ত সবচেয়ে ছোট।'),B({pid:kid,pa:p,pal:'key',vr:[['i',i],['key',key],['j',j]]}));
         break;
       }
-      cmp++;const x=a[j].v,yes=x>key;
+      K.c++;const x=a[j].v,yes=x>key;
       tp(2,'while (j >= 0 && arr[j] > key)','j = '+j+':  '+x+' > '+key+' ?  '+(yes?'YES':'NO → loop ends'),id,'',4);
       snap(PH.cmp,yes?QM('j = '+j+': is '+x+' > '+key+'? Yes, '+x+' must move right.','j = '+j+': '+x+' > '+key+' কি? হ্যাঁ, '+x+' ডানে সরবে।'):QM('j = '+j+': is '+x+' > '+key+'? No, '+key+' belongs right after it.','j = '+j+': '+x+' > '+key+' কি? না, '+key+' এর ঠিক ডানেই বসবে।'),B({pid:kid,pa:p,pal:'key',pb:j,pbl:'j',act:[j],vr:[['i',i],['key',key],['j',j]]}));
       if(!yes)break;
-      sw(j,j+1);swp++;p=j;
+      sw(j,j+1);K.w++;p=j;
       tp(3,'arr[j + 1] = arr[j];','shift '+x+' one step right',id,'',5);
       snap(PH.shift,QM('arr[j + 1] = arr[j]: '+x+' shifts one step right. (On screen the key slides left into the gap.)','arr[j + 1] = arr[j]: '+x+' এক ধাপ ডানে সরে। (স্ক্রিনে key বাঁ দিকে ফাঁকা জায়গায় সরে যায়।)'),B({pid:kid,pa:p,pal:'key',pb:j,pbl:'j',vr:[['i',i],['key',key],['j',j]]}));
       j--;
@@ -1587,16 +1605,327 @@ function insRun(vals){
   S.TR=TR;S.CC=CC;
   return S;
 }
-const ALG={qs:{run:qsRun,def:QDEF,t:QT,lc:[0,1,2,3,4]},bubble:{run:bubRun,def:BDEF,t:QTB,lc:[3,4]},sel:{run:selRun,def:SDEF,t:QTS,lc:[0,3,4]},ins:{run:insRun,def:IDEF,t:QTI,lc:[0,1,3,4]}};
+/* ---- Heap Sort ---- */
+const QTH={
+ en:{title:'Heap Sort Visualizer',
+  purpose:'Heap Sort first arranges the numbers into a max-heap, a tree where every parent is at least as big as its children, so the biggest number sits at the top (index 0). Then it repeatedly swaps the top with the last number of the heap, shrinks the heap by one, and repairs it with Heapify.',
+  cx:'Always O(n log n) · extra space O(log n) for the recursive Heapify · not stable',
+  sorted:'Sorted (still O(n log n))',
+  note:'Each Heapify call opens as its own copy, one level deeper, and calls itself again when a number has to move further down. Finished calls turn grey. The tree above the cards shows the same numbers as a heap: children of index k are 2k+1 and 2k+2.',
+  lg:['Largest so far','Being compared','Final place'],
+  cm:['','build phase: start at the last parent and go up','make the subtree at i a max-heap','sort phase: the heap shrinks by one each time','the biggest number (the root) goes to the end: its final place','repair the smaller heap','','','','assume the root is the largest','index of the left child','index of the right child','is the left child bigger?','is the right child bigger?','is a child bigger than the root?','move the bigger child up','the moved-down number may break the heap below: repeat','','']},
+ bn:{title:'হিপ সর্ট ভিজ্যুয়ালাইজার',
+  purpose:'Heap Sort প্রথমে সংখ্যাগুলোকে max-heap-এ সাজায়, যেটা এমন একটি গাছ যেখানে প্রতিটি parent তার children-এর চেয়ে ছোট নয়, তাই সবচেয়ে বড় সংখ্যাটি সবার উপরে (index 0) থাকে। এরপর বারবার উপরের সংখ্যাটিকে heap-এর শেষ সংখ্যার সাথে অদলবদল করে, heap এক ছোট করে এবং Heapify দিয়ে ঠিক করে।',
+  cx:'সবসময় O(n log n) · রিকার্সিভ Heapify-এর জন্য বাড়তি স্পেস O(log n) · stable নয়',
+  sorted:'সাজানো (তবুও O(n log n))',
+  note:'প্রতিটি Heapify কল নিজের কপি হিসেবে এক ধাপ ভেতরে খোলে, আর কোনো সংখ্যাকে আরও নিচে নামতে হলে নিজেকেই আবার কল করে। শেষ হওয়া কল ধূসর হয়। কার্ডের উপরের গাছটি একই সংখ্যাকে heap হিসেবে দেখায়: index k-এর children হলো 2k+1 ও 2k+2।',
+  lg:['এখন পর্যন্ত সবচেয়ে বড়','তুলনা হচ্ছে','চূড়ান্ত জায়গা'],
+  cm:['','build ধাপ: শেষ parent থেকে শুরু করে উপরে যাই','i-এর নিচের subtree-কে max-heap বানাই','sort ধাপ: প্রতিবার heap এক ছোট হয়','সবচেয়ে বড় সংখ্যা (root) শেষে যায়: চূড়ান্ত জায়গা','ছোট হওয়া heap ঠিক করি','','','','ধরি root-ই সবচেয়ে বড়','বাম child-এর index','ডান child-এর index','বাম child কি বড়?','ডান child কি বড়?','কোনো child কি root-এর চেয়ে বড়?','বড় child-কে উপরে তুলি','নিচে নামা সংখ্যা নিচের heap ভাঙতে পারে: আবার করি','','']}
+};
+const HDEF=[[0,'HeapSort(arr, n) {'],[1,'for (i = n / 2 - 1; i >= 0; i--)'],[2,'Heapify(arr, n, i);'],[1,'for (end = n - 1; end > 0; end--) {'],[2,'swap(arr[0], arr[end]);'],[2,'Heapify(arr, end, 0);'],[1,'}'],[0,'}'],
+ [0,'Heapify(arr, size, root) {'],[1,'largest = root;'],[1,'left = 2 * root + 1;'],[1,'right = 2 * root + 2;'],[1,'if (left < size && arr[left] > arr[largest]) largest = left;'],[1,'if (right < size && arr[right] > arr[largest]) largest = right;'],[1,'if (largest != root) {'],[2,'swap(arr[root], arr[largest]);'],[2,'Heapify(arr, size, largest);'],[1,'}'],[0,'}']];
+function heapRun(vals){
+  const K=qsKit(vals),n=K.n,a=K.a,S=K.S,TR=K.TR,CC=K.CC,fin=K.fin,tp=K.tp,tc=K.tc,snap=K.snap,sw=K.sw,vs=K.vs,sl=K.sl;
+  const PH={start:QM('Start','শুরু'),build:QM('Build heap','হিপ বানানো'),heap:QM('Heapify','Heapify'),cmp:QM('Compare','তুলনা'),swap:QM('Swap','অদলবদল'),sort:QM('Sort phase','Sort ধাপ'),done:QM('Done','শেষ')};
+  function H(size,root,d,fr,back){
+    const id=CC.length;CC.push({end:-1});
+    const fl='heap 0..'+(size-1),B=o=>Object.assign({lo:0,hi:size-1,fl,pa:root,pal:'root',pb:null},o);
+    let g=root;const V=()=>[['size',size],['root',root],['largest',g]];
+    tp(d,'Heapify(arr, '+size+', '+root+') {','root = '+root+'  (value '+a[root].v+')',id,'call',8,fr);
+    snap(PH.heap,QM('Heapify(arr, '+size+', '+root+') is called: make index '+root+' (value '+a[root].v+') bigger than its children, or move it down.','Heapify(arr, '+size+', '+root+') কল হলো: index '+root+' (মান '+a[root].v+') যেন তার children-এর চেয়ে বড় হয়, নইলে নিচে নামাই।'),B({vr:V()}));
+    tp(d+1,'largest = root;','largest = '+root+'  (value '+a[root].v+')',id,'',9);
+    snap(PH.heap,QM('largest = '+root+': for now the root is our largest.','largest = '+root+': আপাতত root-ই সবচেয়ে বড়।'),B({pid:a[g].id,vr:V()}));
+    const L=2*root+1,R=2*root+2;
+    tp(d+1,'left = 2 * root + 1;','left = '+L+(L<size?'  (value '+a[L].v+')':'  (outside the heap)'),id,'',10);
+    tp(d+1,'right = 2 * root + 2;','right = '+R+(R<size?'  (value '+a[R].v+')':'  (outside the heap)'),id,'',11);
+    const ch=[L<size?L:null,R<size?R:null].filter(x=>x!==null);
+    snap(PH.heap,QM('Children of index '+root+': left = '+L+(L<size?' (value '+a[L].v+')':' (outside the heap)')+', right = '+R+(R<size?' (value '+a[R].v+')':' (outside the heap)')+'.','index '+root+'-এর children: left = '+L+(L<size?' (মান '+a[L].v+')':' (heap-এর বাইরে)')+', right = '+R+(R<size?' (মান '+a[R].v+')':' (heap-এর বাইরে)')+'।'),B({pid:a[g].id,act:ch,vr:V()}));
+    [[L,'left',12,'L','বাম'],[R,'right',13,'R','ডান']].forEach(c=>{
+      const k=c[0],nm=c[1],dl=c[2],lab=c[3],cond='if ('+nm+' < size && arr['+nm+'] > arr[largest])';
+      if(k<size){
+        K.c++;const x=a[k].v,y=a[g].v,yes=x>y;
+        tp(d+1,cond+' largest = '+nm+';',nm+' = '+k+':  '+x+' > '+y+' ?  '+(yes?'YES → largest = '+k:'NO'),id,'',dl);
+        if(yes)g=k;
+        snap(PH.cmp,yes?QM('Is the '+nm+' child '+x+' > '+y+'? Yes, largest = '+k+'.',c[4]+' child '+x+' > '+y+' কি? হ্যাঁ, largest = '+k+'।'):QM('Is the '+nm+' child '+x+' > '+y+'? No, keep largest = '+g+'.',c[4]+' child '+x+' > '+y+' কি? না, largest = '+g+'-ই থাকে।'),B({pid:a[g].id,pb:k,pbl:lab,act:[k],vr:V()}));
+      }else{
+        tp(d+1,cond+' largest = '+nm+';',nm+' = '+k+' is outside the heap → skip',id,'',dl);
+        snap(PH.cmp,QM('No '+nm+' child (index '+k+' is outside the heap), skip.',c[4]+' child নেই (index '+k+' heap-এর বাইরে), বাদ।'),B({pid:a[g].id,vr:V()}));
+      }
+    });
+    const diff=g!==root;
+    tp(d+1,'if (largest != root)',diff?'largest = '+g+' ≠ root = '+root+' → swap needed':'largest = root → the heap property holds here, return',id,'',14);
+    snap(PH.cmp,diff?QM('largest ('+g+') ≠ root ('+root+'): a child is bigger than the root, so swap them.','largest ('+g+') ≠ root ('+root+'): একটি child root-এর চেয়ে বড়, তাই অদলবদল।'):QM('largest = root: the heap property holds here. Return.','largest = root: এখানে heap-এর নিয়ম ঠিক আছে। ফেরত যাই।'),B({pid:a[g].id,vr:V()}));
+    if(diff){
+      sw(root,g);K.w++;
+      tp(d+2,'swap(arr[root], arr[largest]);','swap index '+root+' and '+g+' → ['+vs()+']',id,'',15);
+      snap(PH.swap,QM('Swap index '+root+' and '+g+'. The bigger number moves up. The smaller one moved down, so we must check below it.','index '+root+' ও '+g+' অদলবদল। বড় সংখ্যা উপরে ওঠে। ছোটটি নিচে নেমেছে, তাই এর নিচটাও দেখতে হবে।'),B({pid:a[root].id,pb:g,pbl:'max',vr:V()}));
+      H(size,g,d+2,16,'back to Heapify(arr, '+size+', '+root+')');
+    }
+    tc(d,id,back,18);
+  }
+  const rid=CC.length;CC.push({end:-1});
+  tp(0,'HeapSort(arr, '+n+') {','['+vs()+']',rid,'call',0);
+  snap(PH.start,QM('Start. HeapSort(arr, n) is called with n = '+n+'. Step 1: build a max-heap. Step 2: move the biggest number to the end, again and again.','শুরু। n = '+n+' নিয়ে HeapSort(arr, n) কল হলো। ধাপ ১: max-heap বানাই। ধাপ ২: সবচেয়ে বড় সংখ্যাটিকে বারবার শেষে পাঠাই।'));
+  for(let i=Math.floor(n/2)-1;i>=0;i--){
+    const id=CC.length;CC.push({end:-1});
+    tp(1,'for (i = n / 2 - 1; i >= 0; i--)','i = '+i+'  (build the heap)',id,'call',1);
+    snap(PH.build,QM('i = '+i+': the last numbers have no children, so we start at the last parent (index '+i+') and go up.','i = '+i+': শেষের সংখ্যাগুলোর children নেই, তাই শেষ parent (index '+i+') থেকে শুরু করে উপরে যাই।'),{lo:0,hi:n-1,fl:'heap 0..'+(n-1),pa:i,pal:'i',pb:null,vr:[['i',i]]});
+    tp(2,'Heapify(arr, n, i);','make the subtree at index '+i+' a max-heap',id,'',2);
+    H(n,i,3,2,'back to HeapSort');
+    tc(1,id,'subtree at index '+i+' is a max-heap',2);
+  }
+  snap(PH.build,QM('The max-heap is built: every parent is ≥ its children, so the biggest number ('+a[0].v+') is at index 0.','max-heap তৈরি: প্রতিটি parent তার children-এর চেয়ে ছোট নয়, তাই সবচেয়ে বড় সংখ্যা ('+a[0].v+') index 0-তে।'),{lo:0,hi:n-1,fl:'heap 0..'+(n-1),pa:0,pal:'root',pb:null});
+  for(let end=n-1;end>0;end--){
+    const id=CC.length;CC.push({end:-1});
+    tp(1,'for (end = n - 1; end > 0; end--)','end = '+end,id,'call',3);
+    snap(PH.sort,QM('end = '+end+': the biggest number ('+a[0].v+') is at index 0. Swap it with index '+end+'.','end = '+end+': সবচেয়ে বড় সংখ্যা ('+a[0].v+') index 0-তে। এটিকে index '+end+'-এর সাথে অদলবদল করি।'),{lo:0,hi:end,fl:'heap 0..'+end,pa:0,pal:'root',pb:end,pbl:'end',pid:a[0].id});
+    const bigv=a[0].v;sw(0,end);K.w++;fin.add(a[end].id);
+    tp(2,'swap(arr[0], arr[end]);','swap index 0 and '+end+' → ['+vs()+']',id,'',4);
+    snap(PH.swap,QM('Swap index 0 and '+end+': '+bigv+' is now in its final place. The heap shrinks to indexes 0..'+(end-1)+'.','index 0 ও '+end+' অদলবদল: '+bigv+' এখন চূড়ান্ত জায়গায়। heap ছোট হয়ে index 0..'+(end-1)+'।'),{lo:0,hi:end-1,fl:'heap 0..'+(end-1),pa:0,pal:'root',pb:null});
+    tp(2,'Heapify(arr, end, 0);','repair the heap of size '+end,id,'',5);
+    H(end,0,3,5,'back to HeapSort');
+    tc(1,id,'end of pass: '+bigv+' is in its final place',6);
+  }
+  a.forEach(q=>fin.add(q.id));
+  tc(0,rid,'all done',7);
+  snap(PH.done,QM('Sorted! Every number is in its final place.','সাজানো শেষ! প্রতিটি সংখ্যা তার চূড়ান্ত জায়গায়।'));
+  S.TR=TR;S.CC=CC;
+  return S;
+}
+function qsTree(s,fin,A){
+  const box=$('qtree'),n=s.o.length,W=$('qstage').clientWidth||600;
+  const lv=Math.floor(Math.log2(n))+1,r=Math.max(11,Math.min(17,Math.floor(W/Math.pow(2,lv-1)/2)-4)),H=lv*46+6;
+  const pos=k=>{const L=Math.floor(Math.log2(k+1)),q=k-(Math.pow(2,L)-1);return [(q+.5)*W/Math.pow(2,L),r+4+L*46];};
+  let g='';
+  for(let k=1;k<n;k++){const a=pos((k-1)>>1),b=pos(k);g+='<line x1="'+a[0]+'" y1="'+a[1]+'" x2="'+b[0]+'" y2="'+b[1]+'" stroke="#475569" stroke-width="1.5"/>';}
+  for(let k=0;k<n;k++){
+    const id=s.o[k],p=pos(k);let f='#312e81',st='#6366f1';
+    if(fin.has(id)){f='#047857';st='#6ee7b7';}else if(id===s.pid){f='#b45309';st='#fcd34d';}else if(A.includes(k)){f='#0e7490';st='#22d3ee';}
+    g+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+r+'" fill="'+f+'" stroke="'+st+'" stroke-width="2"/><text x="'+p[0]+'" y="'+(p[1]+4)+'" text-anchor="middle" font-size="'+(r>14?13:11)+'" font-weight="700" fill="#fff">'+qV[id]+'</text><text x="'+p[0]+'" y="'+(p[1]+r+11)+'" text-anchor="middle" font-size="9" fill="#94a3b8">'+k+'</text>';
+  }
+  box.style.display='';box.innerHTML='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="heap tree">'+g+'</svg>';
+}
+/* ---- Shell Sort ---- */
+const QTSH={
+ en:{title:'Shell Sort Visualizer',
+  purpose:'Shell Sort is Insertion Sort with a twist. First it sorts numbers that are far apart (gap places apart), then it halves the gap and repeats. Big numbers jump long distances early, so when the gap reaches 1 the list is almost sorted and the last pass is fast.',
+  cx:'Depends on the gap sequence: about O(n²) in the worst case with the gaps n/2, n/4, … 1, and often much faster in practice · extra space O(1) · not stable',
+  sorted:'Sorted (best case)',
+  note:'There are no function calls here. Each gap opens as its own block, and inside it every i opens a smaller block that does one gapped insertion. Numbers in the same chain (cyan) are exactly gap places apart. Finished blocks turn grey.',
+  lg:['Key being inserted','Same chain (gap apart)','Being compared','Final place'],
+  cm:['','start with a big gap and halve it each time','insertion sort on the numbers that are gap places apart','pick up the next number: the key','start at the key’s position','while the number gap places to the left is bigger','shift it gap places to the right','jump gap places to the left','','drop the key into the gap','','','']},
+ bn:{title:'শেল সর্ট ভিজ্যুয়ালাইজার',
+  purpose:'Shell Sort হলো একটু পরিবর্তিত Insertion Sort। প্রথমে সে দূরে দূরে থাকা সংখ্যাগুলো (gap ঘর দূরে) সাজায়, তারপর gap অর্ধেক করে আবার সাজায়। বড় সংখ্যাগুলো শুরুতেই অনেক দূর লাফিয়ে যায়, তাই gap 1 হলে তালিকা প্রায় সাজানো থাকে এবং শেষ pass দ্রুত শেষ হয়।',
+  cx:'নির্ভর করে gap ক্রমের উপর: n/2, n/4, … 1 gap নিলে সবচেয়ে খারাপ ক্ষেত্রে প্রায় O(n²), বাস্তবে প্রায়ই অনেক দ্রুত · বাড়তি স্পেস O(1) · stable নয়',
+  sorted:'সাজানো (সেরা ক্ষেত্র)',
+  note:'এখানে কোনো ফাংশন কল নেই। প্রতিটি gap নিজের ব্লক হিসেবে খোলে, আর তার ভেতরে প্রতিটি i একটি ছোট ব্লক খোলে যা gap-সহ একটি insertion করে। একই chain-এর সংখ্যা (সায়ান) ঠিক gap ঘর দূরে থাকে। শেষ হওয়া ব্লক ধূসর হয়।',
+  lg:['যে key বসানো হচ্ছে','একই chain (gap দূরে)','তুলনা হচ্ছে','চূড়ান্ত জায়গা'],
+  cm:['','বড় gap দিয়ে শুরু, প্রতিবার অর্ধেক','gap ঘর দূরের সংখ্যাগুলোর উপর insertion sort','পরের সংখ্যাটি তুলি: key','key-এর জায়গা থেকে শুরু','gap ঘর বামের সংখ্যাটি বড় হলে চলতে থাকি','সেটিকে gap ঘর ডানে সরাই','gap ঘর বামে লাফ দিই','','key-কে ফাঁকা জায়গায় বসাই','','','']}
+};
+const SHDEF=[[0,'ShellSort(arr, n) {'],[1,'for (gap = n / 2; gap > 0; gap = gap / 2) {'],[2,'for (i = gap; i < n; i++) {'],[3,'key = arr[i];'],[3,'j = i;'],[3,'while (j >= gap && arr[j - gap] > key) {'],[4,'arr[j] = arr[j - gap];'],[4,'j = j - gap;'],[3,'}'],[3,'arr[j] = key;'],[2,'}'],[1,'}'],[0,'}']];
+function shellRun(vals){
+  const K=qsKit(vals,'shifts'),n=K.n,a=K.a,S=K.S,TR=K.TR,CC=K.CC,fin=K.fin,tp=K.tp,tc=K.tc,snap=K.snap,sw=K.sw,vs=K.vs,sl=K.sl;
+  const PH={start:QM('Start','শুরু'),gap:QM('Gap','Gap'),pass:QM('Pass','Pass'),key:QM('Key','Key'),cmp:QM('Compare','তুলনা'),shift:QM('Shift','সরানো'),place:QM('Insert','বসানো'),done:QM('Done','শেষ')};
+  const rid=CC.length;CC.push({end:-1});
+  tp(0,'ShellSort(arr, '+n+') {','['+vs()+']',rid,'call',0);
+  snap(PH.start,QM('Start. ShellSort(arr, n) is called with n = '+n+'. We begin with gap = '+Math.floor(n/2)+'.','শুরু। n = '+n+' নিয়ে ShellSort(arr, n) কল হলো। আমরা gap = '+Math.floor(n/2)+' দিয়ে শুরু করি।'));
+  for(let g=Math.floor(n/2);g>0;g=Math.floor(g/2)){
+    const gid=CC.length;CC.push({end:-1});
+    tp(1,'for (gap = n / 2; gap > 0; gap = gap / 2)','gap = '+g,gid,'call',1);
+    snap(PH.gap,QM('gap = '+g+': sort the numbers that are '+g+' places apart, using insertion sort on each chain.','gap = '+g+': যে সংখ্যাগুলো '+g+' ঘর দূরে দূরে আছে, প্রতিটি chain-এ insertion sort করে সেগুলো সাজাই।'),{vr:[['gap',g]]});
+    for(let i=g;i<n;i++){
+      const iid=CC.length;CC.push({end:-1});const key=a[i].v,kid=a[i].id;
+      const chain=[];for(let q=i%g;q<=i;q+=g)chain.push(q);
+      const B=o=>Object.assign({zl:chain,pa:null,pb:null},o);
+      tp(2,'for (i = gap; i < n; i++)','i = '+i+'  (chain: indexes '+chain.join(', ')+')',iid,'call',2);
+      snap(PH.pass,QM('i = '+i+': insert the number at index '+i+' into its chain (indexes '+chain.join(', ')+'), which are '+g+' places apart.','i = '+i+': index '+i+'-এর সংখ্যাটিকে তার chain-এ (index '+chain.join(', ')+', যেগুলো '+g+' ঘর দূরে) বসাই।'),B({vr:[['gap',g],['i',i]]}));
+      let j=i;
+      tp(3,'key = arr[i];','key = '+key,iid,'',3);
+      snap(PH.key,QM('key = '+key+': pick up the number at index '+i+'.','key = '+key+': index '+i+'-এর সংখ্যাটি তুলে নিই।'),B({pid:kid,pa:j,pal:'key',vr:[['gap',g],['i',i],['key',key]]}));
+      tp(3,'j = i;','j = '+j,iid,'',4);
+      snap(PH.key,QM('j = '+j+': we start at the key’s position.','j = '+j+': key-এর জায়গা থেকে শুরু।'),B({pid:kid,pa:j,pal:'j',vr:[['gap',g],['i',i],['j',j]]}));
+      while(true){
+        if(j<g){
+          tp(3,'while (j >= gap && arr[j - gap] > key)','j = '+j+' < gap → no number '+g+' places to the left, loop ends',iid,'',5);
+          snap(PH.cmp,QM('j = '+j+' is less than gap ('+g+'): there is no number '+g+' places to the left, so the loop ends.','j = '+j+', gap ('+g+')-এর চেয়ে ছোট: '+g+' ঘর বামে কোনো সংখ্যা নেই, তাই লুপ শেষ।'),B({pid:kid,pa:j,pal:'j',vr:[['gap',g],['i',i],['j',j]]}));
+          break;
+        }
+        K.c++;const x=a[j-g].v,yes=x>key;
+        tp(3,'while (j >= gap && arr[j - gap] > key)','j = '+j+':  arr['+(j-g)+'] = '+x+' > '+key+' ?  '+(yes?'YES':'NO → loop ends'),iid,'',5);
+        snap(PH.cmp,yes?QM('Is '+x+' (index '+(j-g)+') > '+key+'? Yes, it must move right by '+g+'.',x+' (index '+(j-g)+') > '+key+' কি? হ্যাঁ, এটি '+g+' ঘর ডানে সরবে।'):QM('Is '+x+' (index '+(j-g)+') > '+key+'? No, '+key+' stays here in its chain.',x+' (index '+(j-g)+') > '+key+' কি? না, '+key+' তার chain-এ এখানেই থাকে।'),B({pid:kid,pa:j,pal:'j',pb:j-g,pbl:'j-gap',act:[j-g],vr:[['gap',g],['i',i],['j',j]]}));
+        if(!yes)break;
+        sw(j-g,j);K.w++;
+        tp(4,'arr[j] = arr[j - gap];','shift '+x+' from index '+(j-g)+' to '+j,iid,'',6);
+        snap(PH.shift,QM('arr[j] = arr[j - gap]: '+x+' shifts '+g+' places right. (On screen the key jumps left into the gap.)','arr[j] = arr[j - gap]: '+x+' '+g+' ঘর ডানে সরে। (স্ক্রিনে key বাঁ দিকে ফাঁকা জায়গায় লাফ দেয়।)'),B({pid:kid,pa:j-g,pal:'key',pb:j,pbl:'moved',vr:[['gap',g],['i',i],['j',j]]}));
+        j-=g;
+        tp(4,'j = j - gap;','j = '+j,iid,'',7);
+        snap(PH.shift,QM('j = j - gap = '+j+'.','j = j - gap = '+j+'।'),B({pid:kid,pa:j,pal:'j',vr:[['gap',g],['i',i],['j',j]]}));
+      }
+      tp(3,'arr[j] = key;','arr['+j+'] = '+key+'  → ['+vs()+']',iid,'',9);
+      snap(PH.place,QM('arr['+j+'] = '+key+': the key drops into its place in the chain.','arr['+j+'] = '+key+': key তার chain-এ নিজের জায়গায় বসে।'),B({pid:kid,pa:j,pal:'key',vr:[['gap',g],['i',i],['j',j]]}));
+      tc(2,iid,'end of i = '+i,10);
+    }
+    tc(1,gid,'gap = '+g+' done: numbers '+g+' places apart are in order',11);
+  }
+  a.forEach(q=>fin.add(q.id));
+  tc(0,rid,'all done',12);
+  snap(PH.done,QM('Sorted! The last pass used gap = 1, so every number is in its final place.','সাজানো শেষ! শেষ pass-এ gap = 1 ছিল, তাই প্রতিটি সংখ্যা চূড়ান্ত জায়গায়।'));
+  S.TR=TR;S.CC=CC;
+  return S;
+}
+/* ---- Counting Sort ---- */
+const QTC={
+ en:{title:'Counting Sort Visualizer',
+  purpose:'Counting Sort never compares two numbers. It counts how many times each value appears, turns the counts into running totals (which tell where each value starts in the sorted list), and then places every number straight into its final slot of an output list.',
+  cx:'O(n + k), where k is the biggest value · no comparisons between numbers · extra space O(n + k) · stable · only for whole numbers in a small range (here 0 to 20)',
+  sorted:'Sorted',lerr:'Counting Sort needs whole numbers from 0 to 20.',
+  note:'No function calls here. The code has three loops, and each one opens as its own block: count, running totals, place. The boxes under the cards show the count array and the output list.',
+  axc:'count (the small number under each box is the value it counts)',axo:'output (the small number under each slot is its index)',
+  lg:['Number being read','Count box in use','Placed in output'],
+  cm:['','one box for every value from 0 to k','phase 1: count every value','one more of this value','phase 2: running totals','now count[v] = how many numbers are ≤ v','phase 3: place the numbers, last to first','count[x] says where the last x belongs','the next equal number goes one slot to the left','','the sorted output replaces arr','']},
+ bn:{title:'কাউন্টিং সর্ট ভিজ্যুয়ালাইজার',
+  purpose:'Counting Sort কখনো দুটি সংখ্যা তুলনা করে না। সে গুনে দেখে প্রতিটি মান কতবার আছে, গণনাগুলোকে যোগফলে (running total) বদলায়, যা বলে দেয় সাজানো তালিকায় প্রতিটি মান কোথা থেকে শুরু হবে, তারপর প্রতিটি সংখ্যাকে সোজা output তালিকার চূড়ান্ত ঘরে বসায়।',
+  cx:'O(n + k), k হলো সবচেয়ে বড় মান · সংখ্যাদের মধ্যে কোনো তুলনা নেই · বাড়তি স্পেস O(n + k) · stable · শুধু ছোট পরিসরের পূর্ণসংখ্যার জন্য (এখানে ০ থেকে ২০)',
+  sorted:'সাজানো',lerr:'Counting Sort-এর জন্য ০ থেকে ২০-এর মধ্যে পূর্ণসংখ্যা লাগবে।',
+  note:'এখানে কোনো ফাংশন কল নেই। কোডে তিনটি লুপ আছে, প্রতিটি নিজের ব্লক হিসেবে খোলে: গণনা, যোগফল, বসানো। কার্ডের নিচের বাক্সগুলো count অ্যারে ও output তালিকা দেখায়।',
+  axc:'count (প্রতিটি বাক্সের নিচের ছোট সংখ্যাটি হলো যে মান সে গোনে)',axo:'output (প্রতিটি ঘরের নিচের ছোট সংখ্যাটি তার index)',
+  lg:['যে সংখ্যা পড়া হচ্ছে','যে count বাক্স ব্যবহার হচ্ছে','output-এ বসেছে'],
+  cm:['','০ থেকে k পর্যন্ত প্রতিটি মানের জন্য একটি বাক্স','ধাপ ১: প্রতিটি মান গুনি','এই মান আরও একটি','ধাপ ২: running total','এখন count[v] = কতগুলো সংখ্যা ≤ v','ধাপ ৩: শেষ থেকে শুরু করে সংখ্যা বসাই','count[x] বলে শেষ x কোথায় বসবে','পরের সমান সংখ্যা এক ঘর বামে যাবে','','সাজানো output arr-কে প্রতিস্থাপন করে','']}
+};
+const CDEF=[[0,'CountingSort(arr, n, k) {'],[1,'count[0..k] = 0;'],[1,'for (i = 0; i < n; i++)'],[2,'count[arr[i]]++;'],[1,'for (v = 1; v <= k; v++)'],[2,'count[v] += count[v - 1];'],[1,'for (i = n - 1; i >= 0; i--) {'],[2,'output[count[arr[i]] - 1] = arr[i];'],[2,'count[arr[i]]--;'],[1,'}'],[1,'copy output back into arr;'],[0,'}']];
+function countRun(vals){
+  const K=qsKit(vals,'writes'),n=K.n,a=K.a,S=K.S,TR=K.TR,CC=K.CC,fin=K.fin,tp=K.tp,tc=K.tc,snap=K.snap,vs=K.vs;
+  const kmax=Math.max(0,...vals),cnt=new Array(kmax+1).fill(0),out=new Array(n).fill(null);
+  const AX=o=>Object.assign({cnt:cnt.slice(),out:out.map(q=>q===null?null:q.v),hc:null,ho:null},o||{});
+  const PH={start:QM('Start','শুরু'),init:QM('Prepare','প্রস্তুতি'),count:QM('Count','গণনা'),sum:QM('Running total','যোগফল'),place:QM('Place','বসানো'),copy:QM('Copy back','ফেরত কপি'),done:QM('Done','শেষ')};
+  const blk=()=>{const id=CC.length;CC.push({end:-1});return id;};
+  const rid=blk();
+  tp(0,'CountingSort(arr, '+n+', '+kmax+') {','['+vs()+']',rid,'call',0);
+  snap(PH.start,QM('Start. CountingSort(arr, n, k) is called with k = '+kmax+', the biggest value. It never compares two numbers: it counts them.','শুরু। k = '+kmax+' (সবচেয়ে বড় মান) নিয়ে CountingSort(arr, n, k) কল হলো। এটি দুটি সংখ্যা তুলনা করে না: গুনে দেখে।'),{ax:AX()});
+  tp(1,'count[0..k] = 0;','k = '+kmax+': '+(kmax+1)+' boxes, all 0',rid,'',1);
+  snap(PH.init,QM('Make '+(kmax+1)+' count boxes for the values 0..'+kmax+', all starting at 0.',(kmax+1)+'টি count বাক্স বানাই (মান 0..'+kmax+'), সবকটি 0 দিয়ে শুরু।'),{ax:AX()});
+  const p1=blk();
+  tp(1,'for (i = 0; i < n; i++)','phase 1: count how many times each value appears',p1,'call',2);
+  for(let i=0;i<n;i++){
+    const x=a[i].v;cnt[x]++;
+    tp(2,'count[arr[i]]++;','i = '+i+':  arr['+i+'] = '+x+'  →  count['+x+'] = '+cnt[x],p1,'',3);
+    snap(PH.count,QM('i = '+i+': the number is '+x+', so count['+x+'] becomes '+cnt[x]+'.','i = '+i+': সংখ্যাটি '+x+', তাই count['+x+'] হয় '+cnt[x]+'।'),{act:[i],pa:i,pal:'i',pb:null,ax:AX({hc:x}),vr:[['i',i],['arr[i]',x]]});
+  }
+  tc(1,p1,'phase 1 done: every value is counted',3);
+  const p2=blk();
+  tp(1,'for (v = 1; v <= k; v++)','phase 2: turn the counts into running totals',p2,'call',4);
+  for(let v=1;v<=kmax;v++){
+    const old=cnt[v],prev=cnt[v-1];cnt[v]=old+prev;
+    tp(2,'count[v] += count[v - 1];','v = '+v+':  '+old+' + '+prev+' = '+cnt[v],p2,'',5);
+    snap(PH.sum,QM('v = '+v+': count['+v+'] = '+old+' + '+prev+' = '+cnt[v]+', so '+cnt[v]+' number(s) are ≤ '+v+'.','v = '+v+': count['+v+'] = '+old+' + '+prev+' = '+cnt[v]+', তাই '+cnt[v]+'টি সংখ্যা ≤ '+v+'।'),{ax:AX({hc:v}),vr:[['v',v]]});
+  }
+  tc(1,p2,'phase 2 done: count[v] = how many numbers are ≤ v',5);
+  const p3=blk();
+  tp(1,'for (i = n - 1; i >= 0; i--)','phase 3: place the numbers into output, from the right',p3,'call',6);
+  for(let i=n-1;i>=0;i--){
+    const x=a[i].v,pos=cnt[x]-1;out[pos]=a[i];K.w++;
+    tp(2,'output[count[arr[i]] - 1] = arr[i];','i = '+i+':  count['+x+'] = '+cnt[x]+'  →  output['+pos+'] = '+x,p3,'',7);
+    snap(PH.place,QM('i = '+i+': count['+x+'] = '+cnt[x]+', so '+x+' goes to output['+pos+'], the last free slot for '+x+'.','i = '+i+': count['+x+'] = '+cnt[x]+', তাই '+x+' যায় output['+pos+']-এ, যা '+x+'-এর শেষ ফাঁকা ঘর।'),{act:[i],pa:i,pal:'i',pb:null,ax:AX({hc:x,ho:pos}),vr:[['i',i],['arr[i]',x]]});
+    cnt[x]--;
+    tp(2,'count[arr[i]]--;','count['+x+'] = '+cnt[x]+'  (the next equal number goes one slot to the left)',p3,'',8);
+    snap(PH.place,QM('count['+x+'] drops to '+cnt[x]+': the next equal number will go one slot to the left.','count['+x+'] কমে '+cnt[x]+': পরের সমান সংখ্যা এক ঘর বামে যাবে।'),{act:[i],pa:i,pal:'i',pb:null,ax:AX({hc:x}),vr:[['i',i],['arr[i]',x]]});
+  }
+  tc(1,p3,'output is full',9);
+  tp(1,'copy output back into arr;','arr = ['+out.map(q=>q.v).join(', ')+']',rid,'',10);
+  a.splice(0,n,...out);a.forEach(q=>fin.add(q.id));
+  snap(PH.copy,QM('Copy the output back into arr. The numbers glide into their final places.','output-কে arr-এ কপি করি। সংখ্যাগুলো চূড়ান্ত জায়গায় সরে যায়।'),{ax:AX()});
+  tc(0,rid,'all done',11);
+  snap(PH.done,QM('Sorted! No two numbers were ever compared.','সাজানো শেষ! কখনো দুটি সংখ্যা তুলনা করা হয়নি।'),{ax:AX()});
+  S.TR=TR;S.CC=CC;
+  return S;
+}
+function auxCount(s){
+  const x=s.ax;if(!x)return '';const tx=ALG.counting.t[lang];
+  let h='<div class="text-xs text-slate-400 mb-1">'+tx.axc+'</div><div class="flex flex-wrap gap-1">';
+  x.cnt.forEach((c,v)=>{h+='<div class="ax'+(x.hc===v?' hl':'')+'"><span>'+c+'</span><i>'+v+'</i></div>';});
+  h+='</div><div class="text-xs text-slate-400 mt-2 mb-1">'+tx.axo+'</div><div class="flex flex-wrap gap-1">';
+  x.out.forEach((o,i)=>{h+='<div class="ax'+(o===null?'':(x.ho===i?' pk':' ok'))+'"><span>'+(o===null?'':o)+'</span><i>'+i+'</i></div>';});
+  return h+'</div>';
+}
+/* ---- Radix Sort ---- */
+const EXPN={1:['ones','এককের'],10:['tens','দশকের'],100:['hundreds','শতকের']};
+const QTR={
+ en:{title:'Radix Sort Visualizer',
+  purpose:'Radix Sort sorts numbers digit by digit, starting from the last digit (ones, then tens, then hundreds). In each pass every number is dropped into one of 10 buckets (0 to 9) by that digit, and the buckets are emptied in order. It never compares two numbers, and equal digits keep their earlier order, which is why it works.',
+  cx:'O(d · (n + 10)), where d is the number of digits · no comparisons between numbers · extra space O(n) · stable · only for whole numbers (here 0 to 999)',
+  sorted:'Sorted',lerr:'Radix Sort needs whole numbers from 0 to 999.',
+  note:'No function calls here. Each pass (one digit) opens as its own block: prepare 10 buckets, drop every number into its bucket, then empty the buckets in order. The underlined digit in a bucket is the digit used in this pass.',
+  axb:'buckets for the digit at position {e} (the small number is the digit 0 to 9)',
+  lg:['Number being placed','Bucket in use','Final place'],
+  cm:['','one pass for every digit, from the last digit up','10 empty buckets, one for each digit 0 to 9','visit every number in the current order','find the digit this pass looks at','drop the number into that bucket (last in line)','','empty the buckets in order 0, 1, … 9 into arr','','']},
+ bn:{title:'রেডিক্স সর্ট ভিজ্যুয়ালাইজার',
+  purpose:'Radix Sort সংখ্যাকে অঙ্ক ধরে ধরে সাজায়, শেষ অঙ্ক (একক), তারপর দশক, তারপর শতক থেকে। প্রতিটি pass-এ প্রতিটি সংখ্যা সেই অঙ্ক অনুযায়ী ১০টি বালতির (০ থেকে ৯) একটিতে পড়ে, তারপর বালতিগুলো ক্রমে খালি করা হয়। এটি কখনো দুটি সংখ্যা তুলনা করে না, আর সমান অঙ্কের সংখ্যাদের আগের ক্রম বজায় থাকে, তাই এটি কাজ করে।',
+  cx:'O(d · (n + 10)), d হলো অঙ্কের সংখ্যা · সংখ্যাদের মধ্যে কোনো তুলনা নেই · বাড়তি স্পেস O(n) · stable · শুধু পূর্ণসংখ্যার জন্য (এখানে ০ থেকে ৯৯৯)',
+  sorted:'সাজানো',lerr:'Radix Sort-এর জন্য ০ থেকে ৯৯৯-এর মধ্যে পূর্ণসংখ্যা লাগবে।',
+  note:'এখানে কোনো ফাংশন কল নেই। প্রতিটি pass (একটি অঙ্ক) নিজের ব্লক হিসেবে খোলে: ১০টি বালতি তৈরি, প্রতিটি সংখ্যাকে তার বালতিতে ফেলা, তারপর বালতিগুলো ক্রমে খালি করা। বালতির ভেতরে দাগ দেওয়া অঙ্কটিই এই pass-এ ব্যবহৃত অঙ্ক।',
+  axb:'অবস্থান {e}-এর অঙ্কের বালতি (ছোট সংখ্যাটি হলো অঙ্ক ০ থেকে ৯)',
+  lg:['যে সংখ্যা বসানো হচ্ছে','যে বালতি ব্যবহার হচ্ছে','চূড়ান্ত জায়গা'],
+  cm:['','প্রতিটি অঙ্কের জন্য একটি pass, শেষ অঙ্ক থেকে উপরে','১০টি খালি বালতি, প্রতিটি অঙ্ক ০ থেকে ৯-এর জন্য','বর্তমান ক্রমে প্রতিটি সংখ্যা দেখি','এই pass যে অঙ্কটি দেখে তা বের করি','সংখ্যাটিকে সেই বালতিতে ফেলি (লাইনের শেষে)','','বালতিগুলো ০, ১, … ৯ ক্রমে arr-এ খালি করি','','']}
+};
+const RDEF=[[0,'RadixSort(arr, n) {'],[1,'for (exp = 1; max / exp > 0; exp *= 10) {'],[2,'bucket[0..9] = empty;'],[2,'for (i = 0; i < n; i++) {'],[3,'d = floor(arr[i] / exp) % 10;'],[3,'bucket[d].append(arr[i]);'],[2,'}'],[2,'arr = bucket[0] + bucket[1] + ... + bucket[9];'],[1,'}'],[0,'}']];
+function radixRun(vals){
+  const K=qsKit(vals,'writes'),n=K.n,a=K.a,S=K.S,TR=K.TR,CC=K.CC,fin=K.fin,tp=K.tp,tc=K.tc,snap=K.snap,vs=K.vs;
+  const mx=Math.max(0,...vals);
+  const PH={start:QM('Start','শুরু'),pass:QM('Pass','Pass'),digit:QM('Digit','অঙ্ক'),put:QM('Bucket','বালতি'),collect:QM('Collect','জড়ো করা'),done:QM('Done','শেষ')};
+  const emptyAX=()=>({bk:Array.from({length:10},()=>[]),exp:1,hb:null,hv:null,col:false});
+  const rid=CC.length;CC.push({end:-1});
+  tp(0,'RadixSort(arr, '+n+') {','['+vs()+']  (biggest = '+mx+')',rid,'call',0);
+  snap(PH.start,QM('Start. RadixSort(arr, n) is called. The biggest number is '+mx+', so we need '+String(mx).length+' pass(es), one per digit.','শুরু। RadixSort(arr, n) কল হলো। সবচেয়ে বড় সংখ্যা '+mx+', তাই '+String(mx).length+'টি pass লাগবে, প্রতিটি অঙ্কের জন্য একটি।'),{ax:emptyAX()});
+  for(let exp=1;Math.floor(mx/exp)>0;exp*=10){
+    const id=CC.length;CC.push({end:-1});
+    const nm=EXPN[exp]||[String(exp),String(exp)];
+    const bk=Array.from({length:10},()=>[]);
+    const AXs=o=>Object.assign({bk:bk.map(b=>b.map(q=>({v:q.v,id:q.id}))),exp,hb:null,hv:null,col:false},o||{});
+    tp(1,'for (exp = 1; max / exp > 0; exp *= 10)','exp = '+exp+'  (look at the '+nm[0]+' digit)',id,'call',1);
+    tp(2,'bucket[0..9] = empty;','10 empty buckets, one for each digit 0..9',id,'',2);
+    snap(PH.pass,QM('exp = '+exp+': sort by the '+nm[0]+' digit. Prepare 10 empty buckets, one for each digit 0 to 9.','exp = '+exp+': '+nm[1]+' অঙ্ক ধরে সাজাই। ০ থেকে ৯ প্রতিটি অঙ্কের জন্য ১০টি খালি বালতি তৈরি করি।'),{ax:AXs()});
+    const cur=a.slice();
+    for(let i=0;i<n;i++){
+      const q=cur[i],d=Math.floor(q.v/exp)%10;
+      tp(3,'d = floor(arr[i] / exp) % 10;','i = '+i+':  '+q.v+'  →  '+nm[0]+' digit d = '+d,id,'',4);
+      snap(PH.digit,QM('i = '+i+': for '+q.v+' the '+nm[0]+' digit is '+d+', so it belongs in bucket '+d+'.','i = '+i+': '+q.v+'-এর '+nm[1]+' অঙ্ক '+d+', তাই এটি বালতি '+d+'-এ যাবে।'),{act:[i],pa:i,pal:'i',pb:null,ax:AXs({hb:d,hv:q.id}),vr:[['exp',exp],['i',i],['d',d]]});
+      bk[d].push(q);K.w++;
+      tp(3,'bucket[d].append(arr[i]);','bucket['+d+'] = ['+bk[d].map(o=>o.v).join(', ')+']',id,'',5);
+      snap(PH.put,QM('Drop '+q.v+' into bucket '+d+'. It now holds: '+bk[d].map(o=>o.v).join(', ')+'.',q.v+' বালতি '+d+'-এ পড়ে। এখন এতে আছে: '+bk[d].map(o=>o.v).join(', ')+'।'),{act:[i],pa:i,pal:'i',pb:null,ax:AXs({hb:d,hv:q.id}),vr:[['exp',exp],['i',i],['d',d]]});
+    }
+    const col=[].concat(...bk);
+    tp(2,'arr = bucket[0] + bucket[1] + ... + bucket[9];','arr = ['+col.map(o=>o.v).join(', ')+']',id,'',7);
+    a.splice(0,n,...col);
+    snap(PH.collect,QM('Empty the buckets in order 0 to 9 into arr. Now the numbers are sorted by the '+nm[0]+' digit, and numbers with the same digit keep their earlier order.','বালতিগুলো ০ থেকে ৯ ক্রমে arr-এ খালি করি। এখন সংখ্যাগুলো '+nm[1]+' অঙ্ক অনুযায়ী সাজানো, আর একই অঙ্কের সংখ্যাদের আগের ক্রম বজায় আছে।'),{ax:AXs({col:true})});
+    tc(1,id,'pass done: sorted by the '+nm[0]+' digit',8);
+  }
+  a.forEach(q=>fin.add(q.id));
+  tc(0,rid,'all done',9);
+  snap(PH.done,QM('Sorted! The last pass used the leading digit, so every number is in its final place.','সাজানো শেষ! শেষ pass-এ সবচেয়ে বাঁয়ের অঙ্ক ব্যবহার হয়েছে, তাই প্রতিটি সংখ্যা চূড়ান্ত জায়গায়।'));
+  S.TR=TR;S.CC=CC;
+  return S;
+}
+function radDig(v,exp){
+  const str=String(v),p=String(exp).length-1,ix=str.length-1-p;
+  return ix<0?'<u>0</u>'+str:str.slice(0,ix)+'<u>'+str[ix]+'</u>'+str.slice(ix+1);
+}
+function auxRadix(s){
+  const x=s.ax;if(!x)return '';const tx=ALG.radix.t[lang];
+  let h='<div class="text-xs text-slate-400 mb-1">'+tx.axb.replace('{e}',x.exp)+'</div><div class="flex flex-wrap gap-1.5">';
+  for(let d=0;d<10;d++)h+='<div class="ax bk'+(x.hb===d?' hl':'')+(x.col?' dim2':'')+'"><i>'+d+'</i><div class="flex flex-wrap gap-0.5 justify-center">'+x.bk[d].map(o=>'<span class="rc'+(o.id===x.hv?' cur2':'')+'">'+radDig(o.v,x.exp)+'</span>').join('')+'</div></div>';
+  return h+'</div>';
+}
+const ALG={qs:{run:qsRun,def:QDEF,t:QT,lc:[0,1,2,3,4]},bubble:{run:bubRun,def:BDEF,t:QTB,lc:[3,4]},sel:{run:selRun,def:SDEF,t:QTS,lc:[0,3,4]},ins:{run:insRun,def:IDEF,t:QTI,lc:[0,1,3,4]},heap:{run:heapRun,def:HDEF,t:QTH,lc:[0,3,4],tree:true},shell:{run:shellRun,def:SHDEF,t:QTSH,lc:[0,1,3,4]},counting:{run:countRun,def:CDEF,t:QTC,lc:[3,0,4],aux:auxCount,lim:20,demo:'4, 1, 3, 0, 4, 2, 1, 3',rnd:[0,9]},radix:{run:radixRun,def:RDEF,t:QTR,lc:[3,0,4],aux:auxRadix,lim:999,demo:'170, 45, 75, 90, 802, 24, 2, 66',rnd:[10,199]}};
 
 function qsBuild(){
   const st=$('qstage');st.innerHTML='';qCards=[];
   const n=qV.length,W=st.clientWidth||600;
-  qSz=Math.max(28,Math.min(56,Math.floor((W-12-(n-1)*qGap)/n)));
+  qGap=W<480?6:10;
+  qSz=Math.max(26,Math.min(56,Math.floor((W-28-(n-1)*qGap)/n)));
   st.style.height=(qSz+78)+'px';
   const fr=document.createElement('div');fr.className='frame';fr.id='qfr';fr.innerHTML='<b></b>';st.appendChild(fr);
   qV.forEach((v,id)=>{const c=document.createElement('div');c.className='card';c.style.width=c.style.height=qSz+'px';c.style.fontSize=Math.round(qSz*.4)+'px';st.appendChild(c);qCards[id]=c;});
-  ['qpi','qpj'].forEach(k=>{const d=document.createElement('div');d.id=k;d.style.cssText='position:absolute;left:0;top:0;width:'+qSz+'px;text-align:center;font-weight:700;font-size:13px;transition:transform var(--dur,.7s) ease,opacity .3s;opacity:0;color:'+(k==='qpi'?'#22d3ee':'#f472b6');d.textContent=k==='qpi'?'i':'j';st.appendChild(d);});
+  ['qpi','qpj'].forEach(k=>{const d=document.createElement('div');d.id=k;d.style.cssText='position:absolute;left:-12px;top:0;width:'+(qSz+24)+'px;text-align:center;white-space:nowrap;font-weight:700;font-size:13px;transition:transform var(--dur,.7s) ease,opacity .3s;opacity:0;color:'+(k==='qpi'?'#22d3ee':'#f472b6');d.textContent=k==='qpi'?'i':'j';st.appendChild(d);});
 }
 function qsTrace(s){
   const T_=qSteps.TR,CC=qSteps.CC,box=$('qtrace'),o=ALG[qAlg].t[lang],DF=ALG[qAlg].def;
@@ -1616,7 +1945,8 @@ function qsTrace(s){
 }
 function qsRender(){
   if(!qSteps.length||!qCards.length)return;
-  const t=QT[lang],s=qSteps[qIdx],X=p=>4+p*(qSz+qGap),Y=34,fin=new Set(s.fin),A=s.act||(s.j!==null?[s.j]:[]);
+  if(Math.abs(qIdx-qLastIdx)===1)qsSound(qSteps[qIdx],qSteps[qLastIdx]);qLastIdx=qIdx;
+  const t=QT[lang],s=qSteps[qIdx],X=p=>14+p*(qSz+qGap),Y=34,fin=new Set(s.fin),A=s.act||(s.j!==null?[s.j]:[]);
   $('qphase').textContent=s.ph[lang];$('qstepno').textContent=t.step+' '+(qIdx+1)+' / '+qSteps.length;
   $('qmsg').textContent=s.m[lang];
   const sk=$('qseek');sk.max=qSteps.length-1;sk.value=qIdx;
@@ -1626,6 +1956,7 @@ function qsRender(){
     if(fin.has(id))k=' done';
     else if(s.lo!==null&&(pos<s.lo||pos>s.hi))k=' dim';
     else if(id===s.pid)k=' put';
+    else if(s.zl&&s.zl.includes(pos))k=' lc';
     else if(s.i!==null){
       if(pos>=s.lo&&pos<=s.i)k=' lc';
       else if(pos>s.i&&pos<(s.j!==null?s.j:s.hi+1))k=' rc';
@@ -1641,30 +1972,48 @@ function qsRender(){
   pi.textContent=s.pal||'i';pj.textContent=s.pbl||'j';
   if(pa!==null&&pa>=0){pi.style.opacity=1;pi.style.transform='translate('+X(pa)+'px,'+py+'px)';}else pi.style.opacity=0;
   if(pb!==null){pj.style.opacity=1;pj.style.transform='translate('+X(pb)+'px,'+(py+(pa===pb?16:0))+'px)';}else pj.style.opacity=0;
+  {const st=$('qstage'),tx=pb!==null?pb:(pa!==null&&pa>=0?pa:null),ov=st.scrollWidth>st.clientWidth+2;
+   $('qhint').style.display=ov?'':'none';$('qhint').textContent=t.swipe;
+   if(ov&&tx!==null){const x=X(tx);if(x+qSz+14>st.scrollLeft+st.clientWidth)st.scrollLeft=x+qSz+14-st.clientWidth;else if(x-14<st.scrollLeft)st.scrollLeft=Math.max(0,x-14);}}
   const chip=(k,v)=>'<span class="px-2 py-0.5 rounded bg-white/10">'+k+' = '+v+'</span>';
+  if(ALG[qAlg].tree)qsTree(s,fin,A);else if(ALG[qAlg].aux){const ah=ALG[qAlg].aux(s);$('qtree').style.display=ah?'':'none';$('qtree').innerHTML=ah;}else $('qtree').style.display='none';
   const pv=s.pid!==null?qV[s.pid]:'–';
   $('qvars').innerHTML=(s.vr?s.vr.map(x=>chip(x[0],x[1])).join(''):(s.lo!==null?chip('low',s.lo)+chip('high',s.hi):'')+(s.pid!==null?chip('pivot',pv):'')+(s.i!==null?chip('i',s.i):'')+(s.j!==null?chip('j',s.j):''))+chip('comparisons',s.cmp)+chip(s.swl||'swaps',s.swp);
   qsTrace(s);
 }
 function qsTexts(){
   const t=QT[lang],a=ALG[qAlg].t[lang];
-  $('algoM').textContent=t.tabM;$('algoQ').textContent=t.tabQ;$('algoB').textContent=t.tabB;$('algoS').textContent=t.tabS;$('algoI').textContent=t.tabI;
+  $('algoM').textContent=t.tabM;$('algoQ').textContent=t.tabQ;$('algoB').textContent=t.tabB;$('algoS').textContent=t.tabS;$('algoI').textContent=t.tabI;$('algoH').textContent=t.tabH;$('algoSh').textContent=t.tabSh;$('algoC').textContent=t.tabC;$('algoR').textContent=t.tabR;
+  sndUI();
   if(qsMode){$('t-title').textContent=a.title;document.title=a.title;}else document.title=tr().title;
   $('qpurpose').textContent=a.purpose;$('qcx').textContent=a.cx;
   $('qload').textContent=t.load;$('qrand').textContent=t.rand;$('qsorted').textContent=a.sorted;$('qrev').textContent=a.rev||t.rev;
-  $('qplay').textContent=qTimer?t.pause:t.play;
-  $('qerr').textContent=$('qerr').dataset.on?t.err:'';
+  $('qplay').textContent=qTimer?t.pause:t.play;$('qshare').textContent=t.share;$('qblk').title=t.blk;$('qblk').setAttribute('aria-label',t.blk);
+  $('qerr').textContent=$('qerr').dataset.on?(($('qerr').dataset.on==='lim'&&a.lerr)?a.lerr:t.err):'';
+  if(qsMode)qsCompareRender();
   $('qt-trace').textContent=TRT[lang].h;$('qt-def').textContent=t.defH;$('qt-steps').textContent=t.stepsH;$('qnote').textContent=a.note;
   const L=[['#fcd34d','#b45309'],['#22d3ee77','#312e81'],['#f472b6aa','#831843'],['#22d3ee','#312e81'],['#6ee7b7','#047857']];
   $('qleg').innerHTML=a.lg.map((x,i)=>{const c=L[ALG[qAlg].lc[i]];return '<span class="px-2 py-0.5 rounded-full border text-slate-100" style="border-color:'+c[0]+';background:'+c[1]+'99">'+x+'</span>';}).join('');
+}
+function qsHref(){return location.href.split('#')[0]+'#'+qAlg+'='+qV.join(',');}
+function qsCompareRender(){
+  const t=QT[lang],box=$('qc');$('qc-h').textContent=t.cmpH;$('qc-n').textContent=t.cmpN;
+  if(!qCmpRows.length){box.innerHTML='';return;}
+  const names={bubble:t.tabB,sel:t.tabS,ins:t.tabI,shell:t.tabSh,qs:t.tabQ,heap:t.tabH,counting:t.tabC,radix:t.tabR},mx=Math.max(1,...qCmpRows.map(r=>r.c));
+  box.innerHTML='<table class="w-full text-xs sm:text-sm"><thead><tr class="text-slate-400 text-left"><th class="py-1 pr-2 font-normal">'+t.cols[0]+'</th><th class="py-1 pr-2 font-normal">'+t.cols[1]+'</th><th class="py-1 pr-2 font-normal">'+t.cols[2]+'</th><th class="py-1 font-normal">'+t.cols[3]+'</th></tr></thead><tbody>'
+   +qCmpRows.map(r=>{const cur=r.k===qAlg;return '<tr class="'+(cur?'bg-white/10 ':'')+'align-middle"><td class="py-1 pr-2"><button data-k="'+r.k+'" class="text-left hover:underline'+(cur?' text-amber-300 font-semibold':'')+'">'+names[r.k]+'</button></td><td class="py-1 pr-2"><div class="flex items-center gap-2"><span class="w-6 text-right tabular-nums">'+r.c+'</span><div class="h-1.5 rounded bg-cyan-400/70" style="width:'+Math.max(3,Math.round(r.c/mx*100))+'%;max-width:55%"></div></div></td><td class="py-1 pr-2 tabular-nums">'+r.w+' <span class="text-slate-500">'+(r.swl==='shifts'?t.shifts:r.swl==='writes'?t.writes:t.swaps)+'</span></td><td class="py-1 tabular-nums">'+r.st+'</td></tr>';}).join('')+'</tbody></table>';
 }
 function qStop(){clearInterval(qTimer);qTimer=null;$('qplay').textContent=QT[lang].play;}
 function qsLoad(){
   qStop();
   const v=$('qinp').value.split(',').map(x=>x.trim()).filter(x=>x!=='').map(Number);
   if(v.length<2||v.length>12||v.some(x=>!Number.isInteger(x))){$('qerr').dataset.on=1;qsTexts();return;}
+  const LM=ALG[qAlg].lim;if(LM&&v.some(x=>x<0||x>LM)){$('qerr').dataset.on='lim';qsTexts();return;}
   delete $('qerr').dataset.on;
-  qV=v;qSteps=ALG[qAlg].run(v);qIdx=0;qsTexts();qsBuild();qsRender();
+  qV=v;qSteps=ALG[qAlg].run(v);qIdx=0;qLastIdx=0;
+  qCmpRows=['bubble','sel','ins','shell','qs','heap','counting','radix'].filter(k=>ALG[k]&&(!ALG[k].lim||v.every(x=>x>=0&&x<=ALG[k].lim))).map(k=>{const r=ALG[k].run(v),l=r[r.length-1];return {k,c:l.cmp,w:l.swp,st:r.length,swl:l.swl||'swaps'};});
+  try{history.replaceState(null,'',qsHref());}catch(e){}
+  qsTexts();qsBuild();qsRender();qsCompareRender();
 }
 function setAlgo(name){
   const q=name!=='m';
@@ -1672,15 +2021,24 @@ function setAlgo(name){
   if(q)qAlg=name;
   [...$('root').children].forEach(el=>{if(el.tagName==='HEADER'||el.id==='algoTabs'||el.id==='qs')return;el.style.display=q?'none':'';});
   $('qs').style.display=q?'':'none';
-  $('algoM').classList.toggle('primary',!q);$('algoQ').classList.toggle('primary',name==='qs');$('algoB').classList.toggle('primary',name==='bubble');$('algoS').classList.toggle('primary',name==='sel');$('algoI').classList.toggle('primary',name==='ins');
+  const TAB={algoM:'m',algoB:'bubble',algoS:'sel',algoI:'ins',algoSh:'shell',algoQ:'qs',algoH:'heap',algoC:'counting',algoR:'radix'};
+  Object.keys(TAB).forEach(id=>{const on=TAB[id]===name;$(id).classList.toggle('primary',on);$(id).setAttribute('aria-pressed',on);});
+  try{$(Object.keys(TAB).find(id=>TAB[id]===name)).scrollIntoView({inline:'center',block:'nearest'});}catch(e){}
+  if(!q){try{history.replaceState(null,'',location.href.split('#')[0]);}catch(e){}}
   layoutApply();
-  if(q){texts();qsLoad();}else{texts();build();render();}
+  if(q){const cv=$('qinp').value.split(',').map(x=>x.trim()).filter(x=>x!=='').map(Number),LM=ALG[name].lim;if(LM&&cv.some(x=>!(x>=0&&x<=LM)))$('qinp').value=ALG[name].demo;texts();qsLoad();}else{texts();build();render();}
 }
-$('algoM').onclick=()=>setAlgo('m');$('algoQ').onclick=()=>setAlgo('qs');$('algoB').onclick=()=>setAlgo('bubble');$('algoS').onclick=()=>setAlgo('sel');$('algoI').onclick=()=>setAlgo('ins');
+$('algoM').onclick=()=>setAlgo('m');$('algoQ').onclick=()=>setAlgo('qs');$('algoB').onclick=()=>setAlgo('bubble');$('algoS').onclick=()=>setAlgo('sel');$('algoI').onclick=()=>setAlgo('ins');$('algoH').onclick=()=>setAlgo('heap');$('algoSh').onclick=()=>setAlgo('shell');$('algoC').onclick=()=>setAlgo('counting');$('algoR').onclick=()=>setAlgo('radix');
 $('qload').onclick=qsLoad;
-$('qrand').onclick=()=>{const n=6+Math.floor(Math.random()*3);$('qinp').value=Array.from({length:n},()=>Math.floor(Math.random()*30)+1).join(', ');qsLoad();};
+$('qrand').onclick=()=>{const n=6+Math.floor(Math.random()*3),R=ALG[qAlg].rnd||[1,30];$('qinp').value=Array.from({length:n},()=>R[0]+Math.floor(Math.random()*(R[1]-R[0]+1))).join(', ');qsLoad();};
 $('qsorted').onclick=()=>{$('qinp').value='1, 2, 3, 4, 5, 6, 7, 8';qsLoad();};
 $('qrev').onclick=()=>{$('qinp').value='8, 7, 6, 5, 4, 3, 2, 1';qsLoad();};
+$('qc').onclick=e=>{const b=e.target.closest('[data-k]');if(b)setAlgo(b.dataset.k);};
+$('qblk').onclick=()=>{qStop();const T=qSteps.TR;let k=qIdx+1;
+  for(;k<qSteps.length-1;k++){let hit=false;for(let q=qSteps[k-1].tl+1;q<=qSteps[k].tl;q++)if(T[q]&&T[q].k==='call'){hit=true;break;}if(hit)break;}
+  qIdx=Math.min(k,qSteps.length-1);qsRender();};
+$('qshare').onclick=()=>{const href=qsHref(),done=()=>{$('qshare').textContent=QT[lang].copied;setTimeout(qsTexts,1600);};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(href).then(done,()=>window.prompt(QT[lang].share,href));else window.prompt(QT[lang].share,href);};
 $('qnext').onclick=()=>{qStop();if(qIdx<qSteps.length-1)qIdx++;qsRender();};
 $('qprev').onclick=()=>{qStop();if(qIdx>0)qIdx--;qsRender();};
 $('qrestart').onclick=()=>{qStop();qIdx=0;qsRender();};
@@ -1689,8 +2047,75 @@ $('qspeed').onchange=()=>{if(qTimer){clearInterval(qTimer);qTimer=setInterval(()
 $('qseek').oninput=e=>{qStop();qIdx=+e.target.value;qsRender();};
 $('qtglSide').onclick=()=>{side=!side;layoutApply();};
 $('qtglSwap').onclick=()=>{swap=!swap;layoutApply();};
+/* ===== Sound (v0.43) ===== */
+var mLastIdx=0;
+var SND={on:true,vol:.5,ctx:null,last:0};
+try{const sv=JSON.parse(localStorage.getItem('msvSound')||'null');if(sv){SND.on=!!sv.on;SND.vol=Math.min(1,Math.max(0,+sv.vol||0));}}catch(e){}
+function sndSave(){try{localStorage.setItem('msvSound',JSON.stringify({on:SND.on,vol:SND.vol}));}catch(e){}}
+function sndCtx(){
+  if(!SND.ctx){const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;try{SND.ctx=new AC();}catch(e){return null;}}
+  if(SND.ctx.state==='suspended'&&SND.ctx.resume)SND.ctx.resume();
+  return SND.ctx;
+}
+function sndOk(){if(!SND.on||SND.vol<=0)return false;const n=performance.now();if(n-SND.last<35)return false;SND.last=n;return true;}
+function sndTone(f,d,type,v,delay){
+  const c=sndCtx();if(!c)return;
+  const t=c.currentTime+(delay||0),o=c.createOscillator(),g=c.createGain();
+  o.type=type||'sine';o.frequency.setValueAtTime(f,t);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.0002,v*SND.vol*.35),t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+d+.03);
+}
+function sndNote(v,lo,hi){const n=hi>lo?(v-lo)/(hi-lo):.5,i=Math.round(n*11),P=[0,2,4,7,9];return 196*Math.pow(2,(P[i%5]+12*Math.floor(i/5))/12);}
+const SNDK={
+  tick(){sndTone(150,.05,'sine',.5);},
+  cmp(fs){fs.forEach((f,i)=>sndTone(f,.11,'sine',.8,i*.06));},
+  move(fs){fs.forEach((f,i)=>sndTone(f,.15,'triangle',.9,i*.07));},
+  swap(fs){fs.forEach((f,i)=>sndTone(f,.14,'triangle',.9,i*.08));sndTone(90,.05,'square',.25,0);},
+  bell(f,d){sndTone(f,.45,'sine',.7,d||0);sndTone(f*2,.3,'sine',.3,d||0);},
+  run(fs){fs.forEach((f,i)=>sndTone(f,.09,'triangle',.7,i*.05));},
+  done(){[262,294,330,392,440,523,659].forEach((f,i,a)=>sndTone(f,i===a.length-1?.7:.14,'triangle',.8,i*.1));}
+};
+const SND_CMP=['Compare','Count','Digit','Key','Pivot'],SND_SWAP=['Swap'],SND_MOVE=['Shift','Place','Insert','Bucket','Copy back','Collect','Running total','New minimum','Place pivot'];
+function qsSound(s,prev){
+  if(!sndOk())return;
+  const lo=Math.min(...qV),hi=Math.max(...qV),f=id=>sndNote(qV[id],lo,hi),ph=s.ph.en,pos=[];
+  (s.act||[]).forEach(p=>pos.push(p));
+  if(!pos.length)[s.pa,s.pb,s.j,s.i].forEach(p=>{if(p!==undefined&&p!==null&&p>=0&&s.o[p]!==undefined&&!pos.includes(p))pos.push(p);});
+  let fs=pos.slice(0,2).map(p=>f(s.o[p]));
+  if(!fs.length&&s.pid!==null)fs=[f(s.pid)];
+  const nf=s.fin.filter(id=>!prev.fin.includes(id));
+  if(ph==='Done'||nf.length>2){SNDK.done();return;}
+  if(SND_CMP.includes(ph)&&fs.length)SNDK.cmp(fs);
+  else if(SND_SWAP.includes(ph)&&fs.length)SNDK.swap(fs);
+  else if(SND_MOVE.includes(ph)&&fs.length)SNDK.move(fs);
+  else SNDK.tick();
+  if(nf.length)SNDK.bell(f(nf[0]),.12);
+}
+function mgSound(s){
+  if(!sndOk())return;
+  const base=steps[0].a,lo=Math.min(...base),hi=Math.max(...base),f=v=>sndNote(v,lo,hi);
+  if(s.phase==='done'){SNDK.done();return;}
+  if(s.phase==='merge'){
+    if(s.cp){SNDK.cmp([f(s.cp[2]),f(s.cp[3])]);return;}
+    const vals=(s.hl||[]).map(i=>s.src?(s.out||[])[i]:s.a[i]).filter(v=>v!=null);
+    if(vals.length>2){SNDK.run(vals.slice(0,8).map(f));return;}
+    if(vals.length){SNDK.move(vals.map(f));return;}
+  }
+  SNDK.tick();
+}
+function sndUI(){
+  const b=$('sndBtn');if(!b)return;
+  b.textContent=SND.on?'🔊':'🔇';b.setAttribute('aria-pressed',String(SND.on));
+  b.title=lang==='bn'?(SND.on?'সাউন্ড চালু':'সাউন্ড বন্ধ'):(SND.on?'Sound on':'Sound off');
+  $('sndVol').value=Math.round(SND.vol*100);$('sndVol').title=lang==='bn'?'ভলিউম':'Volume';
+}
+$('sndBtn').onclick=()=>{SND.on=!SND.on;sndSave();sndUI();if(SND.on){SND.last=0;sndCtx();SNDK.bell(440);}};
+$('sndVol').oninput=e=>{SND.vol=+e.target.value/100;sndSave();};
+$('sndVol').onchange=()=>{if(SND.on){SND.last=0;SNDK.cmp([330]);}};
+sndUI();
 layoutApply();
 load();
+(function(){const m=/^#(qs|bubble|sel|ins|heap|shell|counting|radix)=(-?\d+(?:,-?\d+)*)$/.exec(location.hash);if(m){$('qinp').value=m[2].split(',').join(', ');setAlgo(m[1]);}})();
 </script>
 </body>
 </html>
